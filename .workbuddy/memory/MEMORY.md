@@ -43,15 +43,22 @@ dotnet run --project Deduplicator.Tests -c Release   # 测试（退出码 0 = �
 ```
 
 ## Git
-- 远程：`git@gitee.com:ren-yongxiang/image_deduplicator.git`（SSH，非 HTTPS）
+- **双远程**（同一份代码托管两处）：
+  - `origin` → `git@gitee.com:ren-yongxiang/image_deduplicator.git`
+  - `github` → `git@github.com:riantr/image_deduplicator.git`
 - 身份：任勇祥 <14427461+ren-yongxiang@user.noreply.gitee.com>（全局已配）
-- **推送必须用 SSH**：HTTPS 会卡在密码输入，非交互终端无法完成
-- 本地密钥 `~/.ssh/id_ed25519` 已在 Gitee 授权（`ssh -T git@gitee.com` 可验证）
+- **必须用 SSH**：HTTPS 会卡在密码输入，非交互终端无法完成
+  （GitHub 无令牌/gh CLI；本地 `id_ed25519` 已在两个平台授权）
+- 上游追踪：`master` → `origin/master`（Gitee）
+- **推送两个远程要显式指定**：`git push origin github master`
+  （`push.default=all` 不是合法值，只有 nothing/matching/simple/upstream/current）
 - CI 配置在 `.github/workflows/ci.yml` 与 `.gitee/workflows/ci.yml`
+  → **GitHub 上会真正生效**（Actions 原生支持），Gitee 需在仓库设置里启用 Gitee Go
 - 回退锚点标签：`backup-before-author-fix`
+- 仓库历史干净：7 次提交，无测试残留
 
 ## 当前状态
 - 构建 0 错误 0 警告；测试 **73 项**全通过
-- git 已推送至 Gitee（6 次提交，master 追踪 origin/master，工作区干净）
+- 已推送到 Gitee 与 GitHub，两处与本地三方同步（`1182149`）
 - XAML 未改动过，绑定属性保持原样
 - **UI 层未经人工验证**：删除、原图对调、文件名交换等交互建议实际跑一遍确认
