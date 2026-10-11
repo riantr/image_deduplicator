@@ -1,0 +1,44 @@
+name: 构建与测试
+
+on:
+  push:
+    branches: [ master, main ]
+  pull_request:
+    branches: [ master, main ]
+
+jobs:
+  build-and-test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ windows-latest, ubuntu-latest ]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 安装 .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: 还原依赖
+        run: dotnet restore
+
+      - name: 构建
+        run: dotnet build --configuration Release --no-restore --nologo
+
+      # 测试项目自带断言，退出码 0 表示全部通过。
+      # 注意：会自行生成临时测试数据并清理，无需额外准备。
+      - name: 运行测试
+        run: dotnet run --project Deduplicator.Tests --configuration Release --no-build
+
+      - name: 上传测试日志（失败时）
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-output-${{ matrix.os }}
+          path: |
+            **/Logs/*.log
+          retention-days: 7
+          if-no-files-found: ignore
