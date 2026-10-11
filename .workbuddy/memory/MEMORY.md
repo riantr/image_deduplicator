@@ -62,6 +62,20 @@ Avalonia + OpenCV 桌面图像去重工具，11 种相似度算法。
 
 **XAML 只在运行时解析，编译通过 ≠ 能跑**。必须有 UI 自动化测试。
 
+## 跨线程：绝不能在 ViewModel/命令层用 ConfigureAwait(false)
+`await xxx.ConfigureAwait(false)` 会让后续代码脱离 UI 线程。若之后修改了
+绑定到 UI 的属性（StatusMessage / Progress / 集合），Avalonia 会抛
+`InvalidOperationException: Call from invalid thread`。
+
+本项目踩过的坑：`AsyncRelayCommand` 用 `ConfigureAwait(false)` 后，
+`finally` 里复位 `IsExecuting` 在后台线程触发 `CanExecuteChanged`，
+该事件被命令绑定读取 `Button.CanExecute` → 直接崩溃，启动即挂。
+
+规则：
+- ViewModel 与命令层：**不用** ConfigureAwait(false)
+- `RaiseCanExecuteChanged` 必须先 `CheckAccess()`，否则 `Post` 到 UI 线程
+- Services 层（不碰 UI）可以用 ConfigureAwait(false)
+
 ## UI 结构（2026-11-11 重构后）
 - `App.axaml`：内联设计令牌（色板/字体层级/圆角）
 - `Views/Controls.axaml`：所有控件样式集中定义，按语义分变体
@@ -109,7 +123,8 @@ dotnet run --project Deduplicator.Tests -c Release -- --profile <目录>
 - 仓库历史干净，无测试残留
 
 ## 当前状态
-- 构建 0 错误 0 警告；测试 **117 项**全通过（含 14 项 UI 测试）
+- 构建 0 错误 0 警告；测试 **119 项**全通过（含 16 项 UI 测试）
+- 应用可正常启动运行（`dotnet run` 已实测无异常）
 - 已推送到 Gitee 与 GitHub，两处与本地三方同步（`1182149`）
 - XAML 未改动过，绑定属性保持原样
 - **UI 已重构但仍需人工确认视觉效果**：自动化测试只验证「能构建、资源不缺失」，
