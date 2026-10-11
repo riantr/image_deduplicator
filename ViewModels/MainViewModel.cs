@@ -538,7 +538,7 @@ public class MainViewModel : ViewModelBase
 
             var images = await Task.Run(
                 () => _deduplicationService.ScanImages(InputDirectory, AlgorithmParameters.SortMethod),
-                cts.Token).ConfigureAwait(false);
+                cts.Token);
 
             cts.Token.ThrowIfCancellationRequested();
 
@@ -580,7 +580,7 @@ public class MainViewModel : ViewModelBase
             var progress = new Progress<int>(v => Progress = v);
 
             await _deduplicationService.CalculateFeaturesAsync(
-                _images, CurrentAlgorithm, AlgorithmParameters, progress, cts.Token).ConfigureAwait(false);
+                _images, CurrentAlgorithm, AlgorithmParameters, progress, cts.Token);
 
             Progress = 100;
             StatusMessage = "特征计算完成";
@@ -607,7 +607,7 @@ public class MainViewModel : ViewModelBase
 
             var progress = new Progress<int>(v => Progress = v);
             var results = await _deduplicationService.CompareFeaturesAsync(
-                _images, CurrentAlgorithm, AlgorithmParameters, progress, cts.Token).ConfigureAwait(false);
+                _images, CurrentAlgorithm, AlgorithmParameters, progress, cts.Token);
 
             Progress = 100;
 
@@ -659,7 +659,7 @@ public class MainViewModel : ViewModelBase
                 _fileOperationService,
                 _recycleBinService,
                 progress,
-                cts.Token).ConfigureAwait(false);
+                cts.Token);
 
             Progress = 100;
             StatusMessage = "去重操作完成";
@@ -766,7 +766,7 @@ public class MainViewModel : ViewModelBase
         var data = image;
         try
         {
-            bool created = await data.EnsureThumbnailAsync(_thumbnailCache).ConfigureAwait(false);
+            bool created = await data.EnsureThumbnailAsync(_thumbnailCache);
             if (!created) return;
 
             await Dispatcher.UIThread.InvokeAsync(() =>
@@ -882,14 +882,20 @@ while (_deletedItemsHistory.Count > 0)
         RefreshCommandStates();
     }
 
-    private async Task SearchDuplicatesAsync()
+private async Task SearchDuplicatesAsync()
     {
         if (SelectedOriginal == null) return;
 
-        await LoadImagesAsync().ConfigureAwait(false);
-        await CalculateFeaturesAsync().ConfigureAwait(false);
-        await CompareFeaturesAsync().ConfigureAwait(false);
-    }
+      /*
+         * 这三步会更新绑定到 UI 的属性（StatusMessage / Progress /
+         * DeduplicationResults / Images），因此必须保持在 UI 线程上。
+         * 不能加 ConfigureAwait(false) —— 之后的代码若跑在后台线程，
+         * 修改这些属性会让 Avalonia 抛 "Call from invalid thread"。
+         */
+        await LoadImagesAsync();
+        await CalculateFeaturesAsync();
+        await CompareFeaturesAsync();
+  }
 
     private void CompareImages()
     {

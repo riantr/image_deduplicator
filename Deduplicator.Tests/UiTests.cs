@@ -49,6 +49,9 @@ try
         // 转换器逻辑
         ConverterTests();
 
+        // 命令的线程安全
+        CommandThreadTests();
+
         // 窗口控件树
         try
         {
@@ -77,7 +80,66 @@ try
         }
     }
 
-    private static void ConverterTests()
+      /// <summary>
+    /// 验证命令的 CanExecuteChanged 在后台线程触发时不会崩溃。
+    ///
+  /// <para>这是真实踩过的坑：<c>ConfigureAwait(false)</c> 让 await 之后的代码
+    /// 运行在后台线程，此时设置 <c>IsExecuting</c> 会触发 <c>CanExecuteChanged</c>，
+    /// 而该事件会去读 Avalonia 控件属性 → 抛
+  /// <c>InvalidOperationException: Call from invalid thread</c>。</para>
+    ///
+  /// <para>异步执行 + 后台触发是必经路径，这里直接模拟该场景。</para>
+ /// </summary>
+    private static void CommandThreadTests()
+    {
+        try
+        {
+            int invoked = 0;
+            var cmd = new Helpers.AsyncRelayCommand(
+                execute: () => Task.CompletedTask,
+canExecute: () => true);
+
+   cmd.CanExecuteChanged += (_, _) => Interlocked.Increment(ref invoked);
+
+            Exception? threadError = null;
+
+            // 模拟后台线程触发（修复前这里会抛
+            // InvalidOperationException: Call from invalid thread）
+var t = new Thread(() =>
+     {
+            try
+            {
+          cmd.RaiseCanExecuteChanged();
+        }
+       catch (Exception ex)
+          {
+           threadError = ex;
+         }
+       });
+  t.Start();
+      t.Join(3000);
+
+  Assert.That(threadError == null,
+   "后台线程触发 CanExecuteChanged 不崩溃",
+    threadError?.GetType().Name + ": " + threadError?.Message);
+
+            if (threadError != null)
+      return;
+
+  // 事件通过 Dispatcher.Post 异步派发到 UI 线程，
+            // 这里等待 UI 线程处理完队列再断言
+            Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+      Assert.True(invoked > 0,
+                "CanExecuteChanged 已派发到 UI 线程");
+      }
+        catch (Exception ex)
+        {
+            Assert.That(false, "命令线程安全检查通过", ex.Message);
+  }
+    }
+
+  private static void ConverterTests()
     {
         var hashSize = new ShowHashSizeConverter();
         var windowSize = new ShowWindowSizeConverter();
