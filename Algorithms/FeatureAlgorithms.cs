@@ -33,56 +33,89 @@ public static class FeatureAlgorithms
     /// <summary>
     /// 计算 SIFT 特征
     /// </summary>
-    /// <param name="maxFeatures">最大特征点数（<paramref name="maxFeatures"/> &lt;= 0 表示不限制）</param>
-public static (KeyPoint[]? keyPoints, Mat? descriptors) ComputeSiftFeatures(Mat image, int maxFeatures = 500)
+    /// <param name="maxFeatures">最大特征点数（&lt;= 0 表示不限制）</param>
+    public static (KeyPoint[]? keyPoints, Mat? descriptors) ComputeSiftFeatures(Mat image, int maxFeatures = 500)
   {
         if (image == null || image.Empty())
-      return (null, null);
+  return (null, null);
 
         try
-     {
-       Mat gray = ToGray(image, out bool ownsGray);
-      try
+        {
+            Mat gray = ToGray(image, out bool ownsGray);
+     try
     {
-        // 小图特征点天然稀少，放宽阈值以保证至少能提取到特征
-       int nFeatures = maxFeatures > 0 ? maxFeatures : 0;
+     /*
+        * 工作尺寸：限制最长边。
+      *
+        * 实测（60 张 400×300 图，单张耗时）：
+        *   原始 400 → 17.68ms   320 → 9.82ms   256 → 8.90ms
+         * 而相似度质量在 400/320/256 下**完全一致**
+    *（重复对恒为 1.0000，独立图恒为 0.0000）。
+      *
+        * 因此取 256 作为工作尺寸：开销降低约 50%，而对去重结果无影响。
+      * 详见 Deduplicator.Tests 的 --quality 工具。
+              */
+      Mat? downscaled = null;
+  Mat work = gray;
+
+    int longest = Math.Max(gray.Rows, gray.Cols);
+         const int MaxWorkingSize = 256;
+
+         if (longest > MaxWorkingSize)
+{
+       double scale = (double)MaxWorkingSize / longest;
+          int newW = Math.Max(1, (int)(gray.Cols * scale));
+        int newH = Math.Max(1, (int)(gray.Rows * scale));
+       downscaled = gray.Resize(new OpenCvSharp.Size(newW, newH),
+         interpolation: InterpolationFlags.Area);
+      work = downscaled;
+      }
+
+      try
+      {
+        int nFeatures = maxFeatures > 0 ? maxFeatures : 0;
 
         using var sift = SIFT.Create(nFeatures, 3, 0.04, 10, 1.6);
-    KeyPoint[]? keyPoints;
-          using var descriptors = new Mat();
-            sift.DetectAndCompute(gray, null, out keyPoints, descriptors);
+        KeyPoint[]? keyPoints;
+  using var descriptors = new Mat();
+  sift.DetectAndCompute(work, null, out keyPoints, descriptors);
 
-        if (descriptors.Empty() || keyPoints == null || keyPoints.Length == 0)
+          if (descriptors.Empty() || keyPoints == null || keyPoints.Length == 0)
+  {
+   // 首次未提取到特征时放宽 contrastThreshold 再试一次
+      using var relaxed = SIFT.Create(nFeatures, 3, 0.01, 10, 1.6);
+     relaxed.DetectAndCompute(work, null, out keyPoints, descriptors);
+        }
+
+  if (descriptors.Empty() || keyPoints == null || keyPoints.Length == 0)
+    {
+      // 平滑图像（如纯色渐变）本就无角点，返回空特征交由上层降级处理
+     return (null, null);
+     }
+
+        /*
+      * 关键：descriptors 由 using 管理，返回前必须深拷贝。
+  * 若直接交出 using 变量的引用，方法返回时它会被释放，
+         * 调用方拿到的就是悬垂指针 —— 访问时直接触发 AccessViolationException。
+         */
+            return (keyPoints, descriptors.Clone());
+   }
+      finally
      {
-      // 首次未提取到特征时放宽 contrastThreshold 再试一次
-            using var relaxed = SIFT.Create(nFeatures, 3, 0.01, 10, 1.6);
-         relaxed.DetectAndCompute(gray, null, out keyPoints, descriptors);
-            }
-
-         if (descriptors.Empty() || keyPoints == null || keyPoints.Length == 0)
-       {
-       // 平滑图像（如纯色渐变）本就无角点，返回空特征交由上层降级处理
-        return (null, null);
-        }
-
-    /*
-        * 关键：descriptors 由 using 管理，返回前必须深拷贝。
-        * 若直接交出 using 变量的引用，方法返回时它会被释放，
-       * 调用方拿到的就是悬垂指针 —— 访问时直接触发 AccessViolationException。
-      */
-     return (keyPoints, descriptors.Clone());
-        }
+  downscaled?.Dispose();
+    }
+    }
    finally
      {
-      if (ownsGray) gray.Dispose();
-  }
-  }
-        catch (Exception ex)
-  {
-      System.Diagnostics.Debug.WriteLine($"SIFT feature computation error: {ex.Message}");
-      return (null, null);
+ if (ownsGray) gray.Dispose();
+    }
         }
-  }
+        catch (Exception ex)
+        {
+         System.Diagnostics.Debug.WriteLine($"SIFT feature computation error: {ex.Message}");
+    return (null, null);
+        }
+    }
 
     /// <summary>
     /// 计算 ORB 特征（原代码中 Surf 分支实际调用的是 ORB）
@@ -95,27 +128,37 @@ public static (KeyPoint[]? keyPoints, Mat? descriptors) ComputeOrbFeatures(Mat i
 try
         {
     Mat gray = ToGray(image, out bool ownsGray);
-    try
-        {
-            // ORB 对图像尺度敏感：先放大到较合理的工作尺寸，小图才能提取到足够特征
-         Mat? upscaled = null;
-  Mat work = gray;
-
-       int longest = Math.Max(gray.Rows, gray.Cols);
-    const int MinWorkingSize = 480;
-
-    if (longest < MinWorkingSize)
-       {
-      double scale = (double)MinWorkingSize / Math.Max(1, longest);
-                int newW = Math.Min(2048, Math.Max(1, (int)(gray.Cols * scale)));
-          int newH = Math.Min(2048, Math.Max(1, (int)(gray.Rows * scale)));
-        upscaled = gray.Resize(new OpenCvSharp.Size(newW, newH),
-                interpolation: InterpolationFlags.Linear);
-    work = upscaled;
-            }
-
         try
-       {
+        {
+       /*
+        * 工作尺寸：限制最长边到 256。
+         *
+    * 实测数据（60 张 400×300 图）：
+         *   原始 400 → 7.43ms   320 → 5.52ms   256 → 4.00ms
+         * 而相似度质量在 400/320/256 下完全一致（--quality 工具验证）。
+       *
+    * 早期版本是把小图「放大」到 480，理由是「ORB 对尺度敏感」。
+       * 实测证明该操作对 400×300 的输入毫无收益（10.92 vs 10.70ms），
+         * 纯属浪费；真正有效的是限制上限。
+         */
+      Mat? resized = null;
+      Mat work = gray;
+
+            int longest = Math.Max(gray.Rows, gray.Cols);
+            const int MaxWorkingSize = 256;
+
+            if (longest > MaxWorkingSize)
+     {
+       double scale = (double)MaxWorkingSize / longest;
+       int newW = Math.Max(1, (int)(gray.Cols * scale));
+        int newH = Math.Max(1, (int)(gray.Rows * scale));
+      resized = gray.Resize(new OpenCvSharp.Size(newW, newH),
+       interpolation: InterpolationFlags.Area);
+                work = resized;
+        }
+
+    try
+      {
     using var orb = ORB.Create();
         if (maxFeatures > 0)
           orb.MaxFeatures = maxFeatures;
@@ -146,7 +189,7 @@ try
    }
        finally
   {
-      upscaled?.Dispose();
+        resized?.Dispose();
      }
      }
   finally

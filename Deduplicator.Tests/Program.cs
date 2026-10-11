@@ -42,7 +42,19 @@ try
      return 0;
 }
 
-      DeduplicationTests.Run(workDir);
+           if (args.Contains("--quality"))
+            {
+         SizeQuality.Run(args.FirstOrDefault(a => !a.StartsWith("--")) ?? workDir);
+                return 0;
+            }
+
+ if (args.Contains("--stage"))
+       {
+            StageProfile.Run(args.FirstOrDefault(a => !a.StartsWith("--")) ?? workDir);
+            return 0;
+  }
+
+            DeduplicationTests.Run(workDir);
             FileSafetyTests.Run(workDir);
         }
         catch (Exception ex)

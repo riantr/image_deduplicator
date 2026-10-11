@@ -223,26 +223,42 @@ public static class HashAlgorithms
     public static (double mean, double contrast) ComputeLumaStats(Mat grayImage)
     {
         if (grayImage == null || grayImage.Empty())
-  return (0, 0);
+            return (0, 0);
 
         try
         {
-            using var small = grayImage.Resize(new Size(64, 64), interpolation: InterpolationFlags.Area);
+            // 调用方通常已缩放到 64×64（代理哈希的前置步骤），
+            // 此时无需重复缩放，跳过一次插值运算
+            Mat? resized = null;
+            Mat work = grayImage;
 
+            if (grayImage.Rows != 64 || grayImage.Cols != 64)
+  {
+       resized = grayImage.Resize(new Size(64, 64), interpolation: InterpolationFlags.Area);
+          work = resized;
+          }
+
+            try
+  {
    using var meanMat = new Mat();
-   using var stdMat = new Mat();
-        Cv2.MeanStdDev(small, meanMat, stdMat);
+                using var stdMat = new Mat();
+     Cv2.MeanStdDev(work, meanMat, stdMat);
 
-            double mean = meanMat.At<double>(0, 0) / 255.0;
-    double std = stdMat.At<double>(0, 0) / 255.0;
+         double mean = meanMat.At<double>(0, 0) / 255.0;
+   double std = stdMat.At<double>(0, 0) / 255.0;
 
-   return (Math.Clamp(mean, 0, 1), Math.Clamp(std, 0, 1));
+        return (Math.Clamp(mean, 0, 1), Math.Clamp(std, 0, 1));
+          }
+       finally
+    {
+        resized?.Dispose();
+   }
         }
-  catch (Exception ex)
+        catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"亮度统计失败: {ex.Message}");
+     System.Diagnostics.Debug.WriteLine($"亮度统计失败: {ex.Message}");
      return (0, 0);
-        }
+  }
     }
 
     /// <summary>
