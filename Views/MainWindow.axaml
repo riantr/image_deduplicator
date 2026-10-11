@@ -5,952 +5,567 @@
         xmlns:vm="using:Deduplicator.ViewModels"
         xmlns:models="using:Deduplicator.Models"
         xmlns:converters="using:Deduplicator.Converters"
-        mc:Ignorable="d" d:DesignWidth="1400" d:DesignHeight="800"
+        mc:Ignorable="d" d:DesignWidth="1440" d:DesignHeight="860"
         x:Class="Deduplicator.Views.MainWindow"
         Title="图像去重工具"
-        Width="1400" Height="800"
-        MinWidth="1200" MinHeight="700"
+        Width="1440" Height="860"
+        MinWidth="1100" MinHeight="680"
         WindowStartupLocation="CenterScreen"
-        FontFamily="Microsoft YaHei" FontSize="9">
+        Background="{DynamicResource SurfaceAltBrush}">
 
     <Design.DataContext>
         <vm:MainViewModel />
     </Design.DataContext>
 
     <Window.Resources>
-        <converters:MultiplyConverter x:Key="MultiplyConverter" />
+        <!--
+  算法参数面板的显示控制。
+
+        重构前，11 种算法各有 4~5 个 Tab 页，参数面板重复约 600 行 XAML，
+        每新增一个参数就要改 11 处。改为「一个下拉框 + 按算法动态显示字段」。
+     -->
+        <converters:ShowHashSizeConverter x:Key="ShowHashSize" />
+        <converters:ShowHashWeightConverter x:Key="ShowHashWeight" />
+        <converters:ShowWindowSizeConverter x:Key="ShowWindowSize" />
+        <converters:ShowThumbSizeConverter x:Key="ShowThumbSize" />
+        <converters:ShowBinsConverter x:Key="ShowBins" />
+        <converters:ShowBlockSizeConverter x:Key="ShowBlockSize" />
+        <converters:ShowFeaturesConverter x:Key="ShowFeatures" />
+        <converters:ShowMinMatchConverter x:Key="ShowMinMatch" />
+        <converters:ShowHessianConverter x:Key="ShowHessian" />
+        <converters:ShowDimConverter x:Key="ShowDim" />
+        <converters:ShowKnnConverter x:Key="ShowKnn" />
+        <converters:AlgorithmDescriptionConverter x:Key="DescriptionText" />
+        <converters:NullToVisibilityConverter x:Key="IsNull" />
     </Window.Resources>
 
-    <Window.Styles>
-        <!-- 全局样式 -->
-        <Style Selector="Window">
-            <Setter Property="FontFamily" Value="Microsoft YaHei" />
-            <Setter Property="FontSize" Value="9" />
-        </Style>
+    <Grid RowDefinitions="Auto,*,Auto">
 
-        <Style Selector="Button">
-            <Setter Property="Height" Value="40" />
-            <Setter Property="FontSize" Value="14" />
-            <Setter Property="FontWeight" Value="Bold" />
-            <Setter Property="CornerRadius" Value="5" />
-            <Setter Property="Foreground" Value="White" />
-            <Setter Property="Padding" Value="10,5" />
-        </Style>
+        <!-- ══════════════ 顶部标题栏 ══════════════ -->
+        <Border Grid.Row="0"
+                Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="0,0,0,1"
+                Padding="20,12">
+            <Grid ColumnDefinitions="Auto,*,Auto">
+                <!-- 品牌 -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10"
+                            VerticalAlignment="Center">
+                    <Border Width="28" Height="28"
+                            Background="{DynamicResource AccentBrush}"
+                            CornerRadius="6">
+                        <TextBlock Text="重" Foreground="White"
+                                   FontWeight="Bold" FontSize="15"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <TextBlock Text="图像去重工具" Classes="h2"
+                               VerticalAlignment="Center" />
+                </StackPanel>
 
-        
-
-        <Style Selector="Button:disabled">
-            <Setter Property="Background" Value="#cccccc" />
-            <Setter Property="Foreground" Value="white" />
-            <Setter Property="Opacity" Value="0.6" />
-        </Style>
-
-        <!-- 按钮颜色样式 -->
-        <Style Selector="Button.load">
-            <Setter Property="Background" Value="#2196F3" />
-        </Style>
-
-        <Style Selector="Button.calculate">
-            <Setter Property="Background" Value="#4CAF50" />
-        </Style>
-
-        <Style Selector="Button.compare">
-            <Setter Property="Background" Value="#9C27B0" />
-        </Style>
-
-        <Style Selector="Button.stop">
-            <Setter Property="Background" Value="#f44336" />
-        </Style>
-
-        <Style Selector="Button.execute">
-            <Setter Property="Background" Value="#2196F3" />
-        </Style>
-
-        <Style Selector="Button.undo">
-            <Setter Property="Background" Value="#FF9800" />
-        </Style>
-
-        <Style Selector="Button.delete">
-            <Setter Property="Background" Value="#f44336" />
-        </Style>
-
-        <Style Selector="Button.navigate">
-            <Setter Property="Background" Value="#607D8B" />
-            <Setter Property="Height" Value="35" />
-        </Style>
-
-        <Style Selector="Button.browse">
-            <Setter Property="Background" Value="#9E9E9E" />
-            <Setter Property="Height" Value="30" />
-            <Setter Property="FontSize" Value="12" />
-        </Style>
-
-        
-
-        <!-- TextBox 样式 -->
-        <Style Selector="TextBox">
-            <Setter Property="Padding" Value="5" />
-            <Setter Property="Margin" Value="2" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="BorderBrush" Value="#ccc" />
-        </Style>
-
-        <!-- Slider 样式 -->
-        <Style Selector="Slider">
-            <Setter Property="Margin" Value="5,0" />
-        </Style>
-
-        <!-- Label 样式 -->
-        <Style Selector="Label">
-            <Setter Property="Margin" Value="2" />
-        </Style>
-
-        <!-- ProgressBar 样式 -->
-        <Style Selector="ProgressBar">
-            <Setter Property="Height" Value="25" />
-            <Setter Property="Margin" Value="5" />
-        </Style>
-
-        <!-- TabControl 样式 -->
-        <Style Selector="TabControl">
-            <Setter Property="Margin" Value="5" />
-        </Style>
-    </Window.Styles>
-
-    <Grid ColumnDefinitions="*, 450">
-        <!-- 左侧控制面板 -->
-        <ScrollViewer Grid.Column="0">
-            <StackPanel Margin="10" Spacing="10">
-                
-                <!-- 目录设置区域 -->
-                <Border BorderBrush="#ccc" BorderThickness="1" Padding="5" Margin="5">
-                    <StackPanel Spacing="5">
-                        <TextBlock Text="目录设置" FontWeight="Bold" Margin="0,0,0,5" FontSize="11" />
-                        <Grid ColumnDefinitions="*, 80">
-                            <TextBox Grid.Column="0"
-                                   Watermark="输入目录"
-                                   Text="{Binding InputDirectory}" />
-                            <Button Grid.Column="1"
-                                  Content="浏览..."
-                                  Classes="browse"
-                                  Click="BrowseInputDirectory_Click"
-                                  Margin="5,0,0,0" />
-                        </Grid>
-                        <Grid ColumnDefinitions="*, 80">
-                            <TextBox Grid.Column="0"
-                                   Watermark="输出目录"
-                                   Text="{Binding OutputDirectory}" />
-                            <Button Grid.Column="1"
-                                  Content="浏览..."
-                                  Classes="browse"
-                                  Click="BrowseOutputDirectory_Click"
-                                  Margin="5,0,0,0" />
-                        </Grid>
-                    </StackPanel>
-                </Border>
-
-                <!-- 算法选项卡 -->
-                <Border BorderBrush="#ccc" BorderThickness="1" Padding="5" Margin="5">
-                    <StackPanel>
-                        <TextBlock Text="算法设置" FontWeight="Bold" Margin="0,0,0,5" FontSize="11" />
-                        <TabControl SelectedIndex="{Binding CurrentAlgorithm}">
-                        
-                        <!-- Hash 算法 -->
-                        <TabItem Header="Hash">
-                            <StackPanel Spacing="8">
-                                <TextBlock Text="文件哈希算法 - 基于文件内容的精确匹配" 
-                                         FontStyle="Italic" 
-                                         Foreground="#666" />
-                                <Grid ColumnDefinitions="120, *">
-                                    <Label Grid.Column="0" Content="哈希算法:" VerticalAlignment="Center" />
-                                    <ComboBox Grid.Column="1" 
-                                            SelectedIndex="0">
-                                        <ComboBoxItem Content="MD5" />
-                                        <ComboBoxItem Content="SHA1" />
-                                        <ComboBoxItem Content="SHA256" />
-                                    </ComboBox>
-                                </Grid>
-                                <Grid ColumnDefinitions="120, 60, *">
-                                    <Label Grid.Column="0" Content="窗口大小:" VerticalAlignment="Center" />
-                                    <Label Grid.Column="1" 
-                                          Content="{Binding AlgorithmParameters.WindowSize}" 
-                                          VerticalAlignment="Center" 
-                                          HorizontalAlignment="Center" />
-                                    <Slider Grid.Column="2" 
-                                          Minimum="3" Maximum="21" 
-                                          TickFrequency="2" 
-                                          IsSnapToTickEnabled="True"
-                                          Value="{Binding AlgorithmParameters.WindowSize}" />
-                                </Grid>
-                                <Grid ColumnDefinitions="120, *">
-                                    <Label Grid.Column="0" Content="排序方式:" VerticalAlignment="Center" />
-                                    <ComboBox Grid.Column="1" 
-                                            SelectedIndex="0">
-                                        <ComboBoxItem Content="文件名" />
-                                        <ComboBoxItem Content="文件大小" />
-                                    </ComboBox>
-                                </Grid>
+                <!-- 主流程：把三步显式化，让用户知道自己在哪一步 -->
+                <Border Grid.Column="1" HorizontalAlignment="Center"
+                        Background="{DynamicResource SurfaceSunkenBrush}"
+                        CornerRadius="8" Padding="4">
+                    <StackPanel Orientation="Horizontal" Spacing="4">
+                        <Border Classes="step" Background="Transparent">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <TextBlock Text="1" Classes="stepNum" />
+                                <TextBlock Text="载入图像" VerticalAlignment="Center" />
                             </StackPanel>
-                        </TabItem>
-
-                        <!-- aHash 算法 -->
-                        <TabItem Header="aHash">
-                            <StackPanel Spacing="8">
-                                <TextBlock Text="平均哈希 - 基于图像平均值的哈希算法" 
-                                         FontStyle="Italic" 
-                                         Foreground="#666" />
-                                <Grid ColumnDefinitions="120, 60, *">
-                                    <Label Grid.Column="0" Content="相似度阈值:" VerticalAlignment="Center" />
-                                    <Label Grid.Column="1" 
-                                          Content="{Binding AlgorithmParameters.Threshold, StringFormat={}{0:F2}}" 
-                                          VerticalAlignment="Center" 
-                                          HorizontalAlignment="Center" />
-                                    <Slider Grid.Column="2"
-                                          Minimum="50" Maximum="100"
-                                          Value="{Binding AlgorithmParameters.Threshold, Converter={StaticResource MultiplyConverter}, ConverterParameter=100}" />
-                                </Grid>
-                                <Grid ColumnDefinitions="120, 60, *">
-                                    <Label Grid.Column="0" Content="哈希大小:" VerticalAlignment="Center" />
-                                    <Label Grid.Column="1" 
-                                          Content="{Binding AlgorithmParameters.HashSize}" 
-                                          VerticalAlignment="Center" 
-                                          HorizontalAlignment="Center" />
-                                    <Slider Grid.Column="2" 
-                                          Minimum="4" Maximum="16" 
-                                          Value="{Binding AlgorithmParameters.HashSize}" />
-                                </Grid>
-                                <Grid ColumnDefinitions="120, 60, *">
-                                    <Label Grid.Column="0" Content="哈希权重:" VerticalAlignment="Center" />
-                                    <Label Grid.Column="1" 
-                                          Content="{Binding AlgorithmParameters.HashWeight, StringFormat={}{0:F2}}" 
-                                          VerticalAlignment="Center" 
-                                          HorizontalAlignment="Center" />
-                                    <Slider Grid.Column="2"
-                                          Minimum="0" Maximum="100"
-                                          Value="{Binding AlgorithmParameters.HashWeight, Converter={StaticResource MultiplyConverter}, ConverterParameter=100}" />
-                                </Grid>
-                                <Grid ColumnDefinitions="120, 60, *">
-                                    <Label Grid.Column="0" Content="排序方式:" VerticalAlignment="Center" />
-                                    <ComboBox Grid.Column="1" Grid.ColumnSpan="2"
-                                            SelectedIndex="0">
-                                        <ComboBoxItem Content="文件名" />
-                                        <ComboBoxItem Content="文件大小" />
-                                    </ComboBox>
-                                </Grid>
-                            </StackPanel>
-                        </TabItem>
-
-                        <!-- dHash 算法 -->
-                        <TabItem Header="dHash">
-                            <StackPanel Spacing="8">
-                                <TextBlock Text="差异哈希 - 基于图像梯度的哈希算法" 
-                                         FontStyle="Italic" 
-                                         Foreground="#666" />
-                                <Grid ColumnDefinitions="120, 60, *">
-                                    <Label Grid.Column="0" Content="相似度阈值:" VerticalAlignment="Center" />
-                                    <Label Grid.Column="1" 
-                                          Content="{Binding AlgorithmParameters.Threshold, StringFormat={}{0:F2}}" 
-                                          VerticalAlignment="Center" 
-                                          HorizontalAlignment="Center" />
-                                    <Slider Grid.Column="2"
-                                          Minimum="50" Maximum="100"
-                                          Value="{Binding AlgorithmParameters.Threshold, Converter={StaticResource MultiplyConverter}, ConverterParameter=100}" />
-                                </Grid>
-                                <Grid ColumnDefinitions="120, 60, *">
-                                    <Label Grid.Column="0" Content="哈希大小:" VerticalAlignment="Center" />
-                                    <Label Grid.Column="1" 
-                                          Content="{Binding AlgorithmParameters.HashSize}" 
-                                          VerticalAlignment="Center" 
-                                          HorizontalAlignment="Center" />
-                                    <Slider Grid.Column="2" 
-                                          Minimum="4" Maximum="16" 
-                                          Value="{Binding AlgorithmParameters.HashSize}" />
-                                </Grid>
-                                <Grid ColumnDefinitions="120, 60, *">
-                                    <Label Grid.Column="0" Content="哈希权重:" VerticalAlignment="Center" />
-                                    <Label Grid.Column="1" 
-                                          Content="{Binding AlgorithmParameters.HashWeight, StringFormat={}{0:F2}}" 
-                                          VerticalAlignment="Center" 
-                                          HorizontalAlignment="Center" />
-                                    <Slider Grid.Column="2"
-                                          Minimum="0" Maximum="100"
-                                          Value="{Binding AlgorithmParameters.HashWeight, Converter={StaticResource MultiplyConverter}, ConverterParameter=100}" />
-                                </Grid>
-                                <Grid ColumnDefinitions="120, 60, *">
-                                    <Label Grid.Column="0" Content="排序方式:" VerticalAlignment="Center" />
-                                    <ComboBox Grid.Column="1" Grid.ColumnSpan="2"
-                                            SelectedIndex="0">
-                                        <ComboBoxItem Content="文件名" />
-                                        <ComboBoxItem Content="文件大小" />
-                                    </ComboBox>
-                                </Grid>
-                            </StackPanel>
-                        </TabItem>
-
-                        <!-- pHash 算法 -->
-                        <TabItem Header="pHash">
-                            <StackPanel Spacing="8">
-                                <TextBlock Text="感知哈希 - 基于DCT变换的哈希算法" 
-                                         FontStyle="Italic" 
-                                         Foreground="#666" />
-                                <Grid ColumnDefinitions="120, 60, *">
-                                    <Label Grid.Column="0" Content="相似度阈值:" VerticalAlignment="Center" />
-                                    <Label Grid.Column="1" 
-                                          Content="{Binding AlgorithmParameters.Threshold, StringFormat={}{0:F2}}" 
-                                          VerticalAlignment="Center" 
-                                          HorizontalAlignment="Center" />
-                                    <Slider Grid.Column="2"
-                                          Minimum="50" Maximum="100"
-                                          Value="{Binding AlgorithmParameters.Threshold, Converter={StaticResource MultiplyConverter}, ConverterParameter=100}" />
-                                </Grid>
-                                <Grid ColumnDefinitions="120, 60, *">
-                                    <Label Grid.Column="0" Content="哈希大小:" VerticalAlignment="Center" />
-                                    <Label Grid.Column="1" 
-                                          Content="{Binding AlgorithmParameters.HashSize}" 
-                                          VerticalAlignment="Center" 
-                                          HorizontalAlignment="Center" />
-                                    <Slider Grid.Column="2" 
-                                          Minimum="4" Maximum="16" 
-                                          Value="{Binding AlgorithmParameters.HashSize}" />
-                                </Grid>
-                                <Grid ColumnDefinitions="120, 60, *">
-                                    <Label Grid.Column="0" Content="哈希权重:" VerticalAlignment="Center" />
-                                    <Label Grid.Column="1" 
-                                          Content="{Binding AlgorithmParameters.HashWeight, StringFormat={}{0:F2}}" 
-                                          VerticalAlignment="Center" 
-                                          HorizontalAlignment="Center" />
-                                    <Slider Grid.Column="2"
-                                          Minimum="0" Maximum="100"
-                                          Value="{Binding AlgorithmParameters.HashWeight, Converter={StaticResource MultiplyConverter}, ConverterParameter=100}" />
-                                </Grid>
-                                <Grid ColumnDefinitions="120, 60, *">
-                                    <Label Grid.Column="0" Content="窗口大小:" VerticalAlignment="Center" />
-                                    <Label Grid.Column="1" 
-                                          Content="{Binding AlgorithmParameters.WindowSize}" 
-                                          VerticalAlignment="Center" 
-                                          HorizontalAlignment="Center" />
-                                    <Slider Grid.Column="2" 
-                                          Minimum="3" Maximum="21" 
-                                          TickFrequency="2" 
-                                          IsSnapToTickEnabled="True"
-                                          Value="{Binding AlgorithmParameters.WindowSize}" />
-                                </Grid>
-                                <Grid ColumnDefinitions="120, 60, *">
-                                    <Label Grid.Column="0" Content="排序方式:" VerticalAlignment="Center" />
-                                    <ComboBox Grid.Column="1" Grid.ColumnSpan="2"
-                                            SelectedIndex="0">
-                                        <ComboBoxItem Content="文件名" />
-                                        <ComboBoxItem Content="文件大小" />
-                                    </ComboBox>
-                                </Grid>
-                            </StackPanel>
-                        </TabItem>
-
-                        <!-- FastDup 算法 -->
-                        <TabItem Header="FastDup">
-                            <StackPanel Spacing="8">
-                                <TextBlock Text="快速去重 - 基于缩略图的快速相似度检测" 
-                                         FontStyle="Italic" 
-                                         Foreground="#666" />
-                                <Grid ColumnDefinitions="120, 60, *">
-                                    <Label Grid.Column="0" Content="相似度阈值:" VerticalAlignment="Center" />
-                                    <Label Grid.Column="1" 
-                                          Content="{Binding AlgorithmParameters.Threshold, StringFormat={}{0:F2}}" 
-                                          VerticalAlignment="Center" 
-                                          HorizontalAlignment="Center" />
-                                    <Slider Grid.Column="2"
-                                          Minimum="50" Maximum="100"
-                                          Value="{Binding AlgorithmParameters.Threshold, Converter={StaticResource MultiplyConverter}, ConverterParameter=100}" />
-                                </Grid>
-                                <Grid ColumnDefinitions="120, 60, *">
-                                    <Label Grid.Column="0" Content="缩略图大小:" VerticalAlignment="Center" />
-                                    <Label Grid.Column="1" 
-                                          Content="{Binding AlgorithmParameters.ThumbSize}" 
-                                          VerticalAlignment="Center" 
-                                          HorizontalAlignment="Center" />
-                                    <Slider Grid.Column="2" 
-                                          Minimum="32" Maximum="256" 
-                                          Value="{Binding AlgorithmParameters.ThumbSize}" />
-                                </Grid>
-                                <Grid ColumnDefinitions="120, 60, *">
-                                    <Label Grid.Column="0" Content="排序方式:" VerticalAlignment="Center" />
-                                    <ComboBox Grid.Column="1" Grid.ColumnSpan="2"
-                                            SelectedIndex="0">
-                                        <ComboBoxItem Content="文件名" />
-                                        <ComboBoxItem Content="文件大小" />
-                                    </ComboBox>
-                                </Grid>
-                            </StackPanel>
-                        </TabItem>
-
-                        <!-- Histogram 算法 -->
-                        <TabItem Header="Histogram">
-                            <StackPanel Spacing="8">
-                                <TextBlock Text="直方图 - 基于颜色直方图的相似度匹配" 
-                                         FontStyle="Italic" 
-                                         Foreground="#666" />
-                                <Grid ColumnDefinitions="120, 60, *">
-                                    <Label Grid.Column="0" Content="相似度阈值:" VerticalAlignment="Center" />
-                                    <Label Grid.Column="1" 
-                                          Content="{Binding AlgorithmParameters.Threshold, StringFormat={}{0:F2}}" 
-                                          VerticalAlignment="Center" 
-                                          HorizontalAlignment="Center" />
-                                    <Slider Grid.Column="2"
-                                          Minimum="50" Maximum="100"
-                                          Value="{Binding AlgorithmParameters.Threshold, Converter={StaticResource MultiplyConverter}, ConverterParameter=100}" />
-                                </Grid>
-                                <Grid ColumnDefinitions="120, 60, *">
-                                    <Label Grid.Column="0" Content="直方图箱数:" VerticalAlignment="Center" />
-                                    <Label Grid.Column="1" 
-                                          Content="{Binding AlgorithmParameters.Bins}" 
-                                          VerticalAlignment="Center" 
-                                          HorizontalAlignment="Center" />
-                                    <Slider Grid.Column="2" 
-                                          Minimum="32" Maximum="256" 
-                                          Value="{Binding AlgorithmParameters.Bins}" />
-                                </Grid>
-                                <Grid ColumnDefinitions="120, 60, *">
-                                    <Label Grid.Column="0" Content="窗口大小:" VerticalAlignment="Center" />
-                                    <Label Grid.Column="1" 
-                                          Content="{Binding AlgorithmParameters.WindowSize}" 
-                                          VerticalAlignment="Center" 
-                                          HorizontalAlignment="Center" />
-                                    <Slider Grid.Column="2" 
-                                          Minimum="3" Maximum="21" 
-                                          TickFrequency="2" 
-                                          IsSnapToTickEnabled="True"
-                                          Value="{Binding AlgorithmParameters.WindowSize}" />
-                                </Grid>
-                                <Grid ColumnDefinitions="120, 60, *">
-                                    <Label Grid.Column="0" Content="排序方式:" VerticalAlignment="Center" />
-                                    <ComboBox Grid.Column="1" Grid.ColumnSpan="2"
-                                            SelectedIndex="0">
-                                        <ComboBoxItem Content="文件名" />
-                                        <ComboBoxItem Content="文件大小" />
-                                    </ComboBox>
-                                </Grid>
-                            </StackPanel>
-                        </TabItem>
-
-                        <!-- Template 算法 -->
-                        <TabItem Header="Template">
-                            <StackPanel Spacing="8">
-                                <TextBlock Text="模板匹配 - 基于模板匹配的相似度检测" 
-                                         FontStyle="Italic" 
-                                         Foreground="#666" />
-                                <Grid ColumnDefinitions="120, 60, *">
-                                    <Label Grid.Column="0" Content="相似度阈值:" VerticalAlignment="Center" />
-                                    <Label Grid.Column="1" 
-                                          Content="{Binding AlgorithmParameters.Threshold, StringFormat={}{0:F2}}" 
-                                          VerticalAlignment="Center" 
-                                          HorizontalAlignment="Center" />
-                                    <Slider Grid.Column="2"
-                                          Minimum="50" Maximum="100"
-                                          Value="{Binding AlgorithmParameters.Threshold, Converter={StaticResource MultiplyConverter}, ConverterParameter=100}" />
-                                </Grid>
-                                <Grid ColumnDefinitions="120, 60, *">
-                                    <Label Grid.Column="0" Content="窗口大小:" VerticalAlignment="Center" />
-                                    <Label Grid.Column="1" 
-                                          Content="{Binding AlgorithmParameters.WindowSize}" 
-                                          VerticalAlignment="Center" 
-                                          HorizontalAlignment="Center" />
-                                    <Slider Grid.Column="2" 
-                                          Minimum="3" Maximum="21" 
-                                          TickFrequency="2" 
-                                          IsSnapToTickEnabled="True"
-                                          Value="{Binding AlgorithmParameters.WindowSize}" />
-                                </Grid>
-                                <Grid ColumnDefinitions="120, 60, *">
-                                    <Label Grid.Column="0" Content="块大小:" VerticalAlignment="Center" />
-                                    <Label Grid.Column="1" 
-                                          Content="{Binding AlgorithmParameters.BlockSize}" 
-                                          VerticalAlignment="Center" 
-                                          HorizontalAlignment="Center" />
-                                    <Slider Grid.Column="2" 
-                                          Minimum="50" Maximum="400" 
-                                          Value="{Binding AlgorithmParameters.BlockSize}" />
-                                </Grid>
-                                <Grid ColumnDefinitions="120, 60, *">
-                                    <Label Grid.Column="0" Content="排序方式:" VerticalAlignment="Center" />
-                                    <ComboBox Grid.Column="1" Grid.ColumnSpan="2"
-                                            SelectedIndex="0">
-                                        <ComboBoxItem Content="文件名" />
-                                        <ComboBoxItem Content="文件大小" />
-                                    </ComboBox>
-                                </Grid>
-                            </StackPanel>
-                        </TabItem>
-
-                        <!-- SSIM 算法 -->
-                        <TabItem Header="SSIM">
-                            <StackPanel Spacing="8">
-                                <TextBlock Text="结构相似性 - 基于结构相似性的图像质量评估" 
-                                         FontStyle="Italic" 
-                                         Foreground="#666" />
-                                <Grid ColumnDefinitions="120, 60, *">
-                                    <Label Grid.Column="0" Content="相似度阈值:" VerticalAlignment="Center" />
-                                    <Label Grid.Column="1" 
-                                          Content="{Binding AlgorithmParameters.Threshold, StringFormat={}{0:F2}}" 
-                                          VerticalAlignment="Center" 
-                                          HorizontalAlignment="Center" />
-                                    <Slider Grid.Column="2"
-                                          Minimum="50" Maximum="100"
-                                          Value="{Binding AlgorithmParameters.Threshold, Converter={StaticResource MultiplyConverter}, ConverterParameter=100}" />
-                                </Grid>
-                                <Grid ColumnDefinitions="120, 60, *">
-                                    <Label Grid.Column="0" Content="窗口大小:" VerticalAlignment="Center" />
-                                    <Label Grid.Column="1" 
-                                          Content="{Binding AlgorithmParameters.WindowSize}" 
-                                          VerticalAlignment="Center" 
-                                          HorizontalAlignment="Center" />
-                                    <Slider Grid.Column="2" 
-                                          Minimum="3" Maximum="21" 
-                                          TickFrequency="2" 
-                                          IsSnapToTickEnabled="True"
-                                          Value="{Binding AlgorithmParameters.WindowSize}" />
-                                </Grid>
-                                <Grid ColumnDefinitions="120, 60, *">
-                                    <Label Grid.Column="0" Content="块大小:" VerticalAlignment="Center" />
-                                    <Label Grid.Column="1" 
-                                          Content="{Binding AlgorithmParameters.BlockSize}" 
-                                          VerticalAlignment="Center" 
-                                          HorizontalAlignment="Center" />
-                                    <Slider Grid.Column="2" 
-                                          Minimum="50" Maximum="400" 
-                                          Value="{Binding AlgorithmParameters.BlockSize}" />
-                                </Grid>
-                                <Grid ColumnDefinitions="120, 60, *">
-                                    <Label Grid.Column="0" Content="排序方式:" VerticalAlignment="Center" />
-                                    <ComboBox Grid.Column="1" Grid.ColumnSpan="2"
-                                            SelectedIndex="0">
-                                        <ComboBoxItem Content="文件名" />
-                                        <ComboBoxItem Content="文件大小" />
-                                    </ComboBox>
-                                </Grid>
-                            </StackPanel>
-                        </TabItem>
-
-                        <!-- SIFT 算法 -->
-                        <TabItem Header="SIFT">
-                            <StackPanel Spacing="8">
-                                <TextBlock Text="尺度不变特征变换 - 基于局部特征点的匹配" 
-                                         FontStyle="Italic" 
-                                         Foreground="#666" />
-                                <Grid ColumnDefinitions="120, 60, *">
-                                    <Label Grid.Column="0" Content="相似度阈值:" VerticalAlignment="Center" />
-                                    <Label Grid.Column="1" 
-                                          Content="{Binding AlgorithmParameters.Threshold, StringFormat={}{0:F2}}" 
-                                          VerticalAlignment="Center" 
-                                          HorizontalAlignment="Center" />
-                                    <Slider Grid.Column="2"
-                                          Minimum="50" Maximum="100"
-                                          Value="{Binding AlgorithmParameters.Threshold, Converter={StaticResource MultiplyConverter}, ConverterParameter=100}" />
-                                </Grid>
-                                <Grid ColumnDefinitions="120, 60, *">
-                                    <Label Grid.Column="0" Content="特征点数:" VerticalAlignment="Center" />
-                                    <Label Grid.Column="1" 
-                                          Content="{Binding AlgorithmParameters.Features}" 
-                                          VerticalAlignment="Center" 
-                                          HorizontalAlignment="Center" />
-                                    <Slider Grid.Column="2" 
-                                          Minimum="100" Maximum="5000" 
-                                          TickFrequency="100"
-                                          Value="{Binding AlgorithmParameters.Features}" />
-                                </Grid>
-                                <Grid ColumnDefinitions="120, 60, *">
-                                    <Label Grid.Column="0" Content="最小匹配数:" VerticalAlignment="Center" />
-                                    <Label Grid.Column="1" 
-                                          Content="{Binding AlgorithmParameters.MinMatch}" 
-                                          VerticalAlignment="Center" 
-                                          HorizontalAlignment="Center" />
-                                    <Slider Grid.Column="2" 
-                                          Minimum="4" Maximum="50" 
-                                          Value="{Binding AlgorithmParameters.MinMatch}" />
-                                </Grid>
-                                <Grid ColumnDefinitions="120, 60, *">
-                                    <Label Grid.Column="0" Content="排序方式:" VerticalAlignment="Center" />
-                                    <ComboBox Grid.Column="1" Grid.ColumnSpan="2"
-                                            SelectedIndex="0">
-                                        <ComboBoxItem Content="文件名" />
-                                        <ComboBoxItem Content="文件大小" />
-                                    </ComboBox>
-                                </Grid>
-                            </StackPanel>
-                        </TabItem>
-
-                        <!-- SURF 算法 -->
-                        <TabItem Header="SURF">
-                            <StackPanel Spacing="8">
-                                <TextBlock Text="加速稳健特征 - 快速鲁棒的特征检测" 
-                                         FontStyle="Italic" 
-                                         Foreground="#666" />
-                                <Grid ColumnDefinitions="120, 60, *">
-                                    <Label Grid.Column="0" Content="相似度阈值:" VerticalAlignment="Center" />
-                                    <Label Grid.Column="1" 
-                                          Content="{Binding AlgorithmParameters.Threshold, StringFormat={}{0:F2}}" 
-                                          VerticalAlignment="Center" 
-                                          HorizontalAlignment="Center" />
-                                    <Slider Grid.Column="2"
-                                          Minimum="50" Maximum="100"
-                                          Value="{Binding AlgorithmParameters.Threshold, Converter={StaticResource MultiplyConverter}, ConverterParameter=100}" />
-                                </Grid>
-                                <Grid ColumnDefinitions="120, 60, *">
-                                    <Label Grid.Column="0" Content="Hessian阈值:" VerticalAlignment="Center" />
-                                    <Label Grid.Column="1" 
-                                          Content="{Binding AlgorithmParameters.HessianThreshold}" 
-                                          VerticalAlignment="Center" 
-                                          HorizontalAlignment="Center" />
-                                    <Slider Grid.Column="2" 
-                                          Minimum="100" Maximum="5000" 
-                                          TickFrequency="100"
-                                          Value="{Binding AlgorithmParameters.HessianThreshold}" />
-                                </Grid>
-                                <Grid ColumnDefinitions="120, 60, *">
-                                    <Label Grid.Column="0" Content="最小匹配数:" VerticalAlignment="Center" />
-                                    <Label Grid.Column="1" 
-                                          Content="{Binding AlgorithmParameters.MinMatch}" 
-                                          VerticalAlignment="Center" 
-                                          HorizontalAlignment="Center" />
-                                    <Slider Grid.Column="2" 
-                                          Minimum="4" Maximum="50" 
-                                          Value="{Binding AlgorithmParameters.MinMatch}" />
-                                </Grid>
-                                <Grid ColumnDefinitions="120, 60, *">
-                                    <Label Grid.Column="0" Content="排序方式:" VerticalAlignment="Center" />
-                                    <ComboBox Grid.Column="1" Grid.ColumnSpan="2"
-                                            SelectedIndex="0">
-                                        <ComboBoxItem Content="文件名" />
-                                        <ComboBoxItem Content="文件大小" />
-                                    </ComboBox>
-                                </Grid>
-                            </StackPanel>
-                        </TabItem>
-
-                        <!-- Lance 算法 -->
-                        <TabItem Header="Lance">
-                            <StackPanel Spacing="8">
-                                <TextBlock Text="向量搜索 - 基于向量数据库的快速相似度搜索" 
-                                         FontStyle="Italic" 
-                                         Foreground="#666" />
-                                <Grid ColumnDefinitions="120, 60, *">
-                                    <Label Grid.Column="0" Content="相似度阈值:" VerticalAlignment="Center" />
-                                    <Label Grid.Column="1" 
-                                          Content="{Binding AlgorithmParameters.Threshold, StringFormat={}{0:F2}}" 
-                                          VerticalAlignment="Center" 
-                                          HorizontalAlignment="Center" />
-                                    <Slider Grid.Column="2"
-                                          Minimum="50" Maximum="100"
-                                          Value="{Binding AlgorithmParameters.Threshold, Converter={StaticResource MultiplyConverter}, ConverterParameter=100}" />
-                                </Grid>
-                                <Grid ColumnDefinitions="120, 60, *">
-                                    <Label Grid.Column="0" Content="向量维度:" VerticalAlignment="Center" />
-                                    <Label Grid.Column="1" 
-                                          Content="{Binding AlgorithmParameters.Dim}" 
-                                          VerticalAlignment="Center" 
-                                          HorizontalAlignment="Center" />
-                                    <Slider Grid.Column="2" 
-                                          Minimum="64" Maximum="512" 
-                                          TickFrequency="64"
-                                          Value="{Binding AlgorithmParameters.Dim}" />
-                                </Grid>
-                                <Grid ColumnDefinitions="120, 60, *">
-                                    <Label Grid.Column="0" Content="KNN参数:" VerticalAlignment="Center" />
-                                    <Label Grid.Column="1" 
-                                          Content="{Binding AlgorithmParameters.Knn}" 
-                                          VerticalAlignment="Center" 
-                                          HorizontalAlignment="Center" />
-                                    <Slider Grid.Column="2" 
-                                          Minimum="1" Maximum="20" 
-                                          Value="{Binding AlgorithmParameters.Knn}" />
-                                </Grid>
-                                <Grid ColumnDefinitions="120, 60, *">
-                                    <Label Grid.Column="0" Content="排序方式:" VerticalAlignment="Center" />
-                                    <ComboBox Grid.Column="1" Grid.ColumnSpan="2"
-                                            SelectedIndex="0">
-                                        <ComboBoxItem Content="文件名" />
-                                        <ComboBoxItem Content="文件大小" />
-                                    </ComboBox>
-                                </Grid>
-                            </StackPanel>
-                        </TabItem>
-
-                    </TabControl>
-                    </StackPanel>
-                </Border>
-
-                <!-- 控制按钮区域 -->
-                <Border BorderBrush="#ccc" BorderThickness="1" Padding="5" Margin="5">
-                    <StackPanel>
-                        <TextBlock Text="控制操作" FontWeight="Bold" Margin="0,0,0,5" FontSize="11" />
-                        <UniformGrid Columns="4" Rows="1">
-                            <Button Content="载入图像"
-                                   Classes="load"
-                                   Command="{Binding LoadImagesCommand}"
-                                   ToolTip.Tip="加载指定目录中的所有图像文件" />
-                            <Button Content="计算特征"
-                                   Classes="calculate"
-                                   Command="{Binding CalculateFeaturesCommand}"
-                                   ToolTip.Tip="计算所有图像的特征向量" />
-                            <Button Content="比对"
-                                   Classes="compare"
-                                   Command="{Binding CompareFeaturesCommand}"
-                                   ToolTip.Tip="比对图像特征并查找重复项" />
-                            <Button Content="停止"
-                                   Classes="stop"
-                                   Command="{Binding StopCommand}"
-                                   ToolTip.Tip="停止当前正在执行的操作" />
-                        </UniformGrid>
-                    </StackPanel>
-                </Border>
-
-                <!-- 进度显示区域 -->
-                <Border BorderBrush="#ccc" BorderThickness="1" Padding="5" Margin="5">
-                    <StackPanel>
-                        <TextBlock Text="进度" FontWeight="Bold" Margin="0,0,0,5" FontSize="11" />
-                        <StackPanel Spacing="5">
-                            <ProgressBar Value="{Binding Progress}" Maximum="100" />
-                            <Grid ColumnDefinitions="*, Auto">
-                                <Label Grid.Column="0"
-                                      Content="{Binding StatusMessage}"
-                                      HorizontalAlignment="Center"
-                                      FontSize="11" />
-                                <Label Grid.Column="1"
-                                      Content="{Binding LoadedImageCount, StringFormat={} ({0} 个)}"
-                                      Margin="5,0,0,0"
-                                      FontSize="11"
-                                      FontWeight="Bold" />
-                            </Grid>
-                        </StackPanel>
-                    </StackPanel>
-                </Border>
-
-                <!-- 执行去重按钮 -->
-                <Button Content="执行去重" 
-                       Classes="execute"
-                       Command="{Binding ExecuteDeduplicationCommand}"
-                       ToolTip.Tip="执行去重操作，删除或移动重复图像" />
-
-                <!-- 日志输出区域 -->
-                <Border BorderBrush="#ccc" BorderThickness="1" Padding="5" Margin="5">
-                    <StackPanel>
-                        <Grid ColumnDefinitions="*, 80, 80" Margin="0,0,0,5">
-                            <TextBlock Grid.Column="0" Text="日志" FontWeight="Bold" FontSize="11" VerticalAlignment="Center" />
-                            <Button Grid.Column="1"
-                                  Content="清空"
-                                  Classes="browse"
-                                  Command="{Binding ClearLogCommand}"
-                                  Margin="2,0"
-                                  ToolTip.Tip="清空日志" />
-                            <Button Grid.Column="2"
-                                  Content="导出"
-                                  Classes="browse"
-                                  Command="{Binding ExportLogCommand}"
-                                  Margin="2,0"
-                                  ToolTip.Tip="导出日志到文件" />
-                        </Grid>
-                        <TextBox Text="{Binding LogText}"
-                                IsReadOnly="True"
-                                TextWrapping="Wrap"
-                                AcceptsReturn="True"
-                                Height="150"
-                                MaxHeight="150"
-                                VerticalAlignment="Stretch"
-                                FontFamily="Consolas"
-                                FontSize="9" />
-                    </StackPanel>
-                </Border>
-
-            </StackPanel>
-        </ScrollViewer>
-
-        <!-- 右侧预览面板 -->
-        <Border Grid.Column="1" 
-               BorderBrush="#ccc" 
-               BorderThickness="1,0,0,0"
-               Background="#f9f9f9">
-            <StackPanel Margin="10" Spacing="10">
-                
-                <!-- 导航按钮区域 -->
-                <Border BorderBrush="#ccc" BorderThickness="1" Padding="5" Margin="5">
-                    <StackPanel>
-                        <TextBlock Text="导航" FontWeight="Bold" Margin="0,0,0,5" FontSize="11" />
-                        <Grid ColumnDefinitions="*, 80, *">
-                            <Button Grid.Column="0"
-                                   Content="◄ 上一个"
-                                   Classes="navigate"
-                                   Command="{Binding NavigatePreviousCommand}" />
-                            <TextBlock Grid.Column="1"
-                                  Text="{Binding NavigationText}"
-                                  HorizontalAlignment="Center"
-                                  VerticalAlignment="Center"
-                                  FontSize="11" />
-                            <Button Grid.Column="2"
-                                   Content="下一个 ►"
-                                   Classes="navigate"
-                                   Command="{Binding NavigateNextCommand}" />
-                        </Grid>
-                    </StackPanel>
-                </Border>
-
-                <!-- 文件列表区域 -->
-                <Border BorderBrush="#ccc" BorderThickness="1" Padding="5" Margin="5">
-                    <StackPanel>
-                        <TextBlock Text="原图列表" FontWeight="Bold" Margin="0,0,0,5" FontSize="11" />
-                        <ListBox x:Name="originalListBox"
-                                 ItemsSource="{Binding OriginalListSource}"
-                                 SelectedItem="{Binding SelectedImage}"
-                                 MinHeight="150" MaxHeight="200">
-                            <ListBox.ItemTemplate>
-                                <DataTemplate>
-                                    <TextBlock Text="{Binding FileName}" 
-                                              FontSize="10"
-                                              ToolTip.Tip="{Binding FilePath}"/>
-                                </DataTemplate>
-                            </ListBox.ItemTemplate>
-                        </ListBox>
-                    </StackPanel>
-                </Border>
-
-                <Border BorderBrush="#ccc" BorderThickness="1" Padding="5" Margin="5">
-                    <StackPanel>
-                        <TextBlock Text="重复图像列表" FontWeight="Bold" Margin="0,0,0,5" FontSize="11" />
-                        <ListBox x:Name="duplicateListBox"
-                                 ItemsSource="{Binding CurrentDuplicates}"
-                                 SelectedItem="{Binding SelectedDuplicate}"
-                                 MinHeight="150">
-                            <ListBox.ItemTemplate>
-                                <DataTemplate>
-                                    <Grid ColumnDefinitions="*, 60">
-                                        <TextBlock Grid.Column="0" 
-                                                  Text="{Binding FileName}"
-                                                  FontSize="10"
-                                                  ToolTip.Tip="{Binding Path}"
-                                                  TextTrimming="CharacterEllipsis"/>
-                                        <TextBlock Grid.Column="1" 
-                                                  Text="{Binding Similarity, StringFormat={}{0:F3}}"
-                                                  FontSize="10"
-                                                  HorizontalAlignment="Right"/>
-                                    </Grid>
-                                </DataTemplate>
-                            </ListBox.ItemTemplate>
-                            <ListBox.ContextMenu>
-                                <ContextMenu>
-                                    <MenuItem Header="原图对调"
-                                         Command="{Binding SwapWithOriginalCommand}"
-                                         ToolTip.Tip="将此重复图像与原图对调" />
-                                    <Separator />
-                                    <MenuItem Header="移出"
-                                         Command="{Binding RemoveFromListCommand}"
-                                         ToolTip.Tip="从重复列表中移除此图像" />
-                                    <MenuItem Header="删除"
-                                         Command="{Binding DeleteDuplicateFileCommand}"
-                                         ToolTip.Tip="删除重复图像(移入回收站)" />
-                                </ContextMenu>
-                            </ListBox.ContextMenu>
-                        </ListBox>
-                    </StackPanel>
-                </Border>
-
-                <!-- 图像预览区域 -->
-                <Border BorderBrush="#ccc" BorderThickness="1" Padding="5" Margin="5">
-                    <StackPanel>
-                        <TextBlock Text="图像预览" FontWeight="Bold" Margin="0,0,0,5" FontSize="11" />
-                        <Grid ColumnDefinitions="*, *" RowDefinitions="Auto, Auto, Auto">
-                        <!-- 原图预览框 -->
-                        <Border Grid.Column="0" Grid.Row="0"
-                               BorderBrush="#ccc" 
-                               BorderThickness="2"
-                               Background="#f5f5f5"
-                               Margin="2"
-                               Height="120">
-                            <Grid RowDefinitions="Auto, *">
-                                <TextBlock Grid.Row="0" Text="原图" 
-                                          HorizontalAlignment="Center" 
-                                          FontSize="10" 
-                                          Foreground="#666"
-                                          Margin="0,2" />
-                                <Image Grid.Row="1"
-                                      Source="{Binding SelectedImageBitmap}"
-                                      Stretch="Uniform"
-                                      Margin="2"
-                                      HorizontalAlignment="Center"
-                                      VerticalAlignment="Center" />
-                            </Grid>
                         </Border>
-                        <!-- 原图文件名（框外） -->
-                        <TextBlock Grid.Column="0" Grid.Row="1"
-                                  Text="{Binding SelectedImage.FileName}" 
-                                  FontSize="9" 
-                                  TextWrapping="Wrap"
-                                  TextTrimming="CharacterEllipsis"
-                                  Margin="2,2"
-                                  HorizontalAlignment="Center"
-                                  ToolTip.Tip="{Binding SelectedImage.FilePath}" />
-
-                        <!-- 重复图预览框 -->
-                        <Border Grid.Column="1" Grid.Row="0"
-                               BorderBrush="#ccc" 
-                               BorderThickness="2"
-                               Background="#f5f5f5"
-                               Margin="2"
-                               Height="120">
-                            <Grid RowDefinitions="Auto, *">
-                                <TextBlock Grid.Row="0" Text="重复图像" 
-                                          HorizontalAlignment="Center" 
-                                          FontSize="10" 
-                                          Foreground="#666"
-                                          Margin="0,2" />
-                                <Image Grid.Row="1"
-                                      Source="{Binding SelectedDuplicateImageData.BitmapImage}"
-                                      Stretch="Uniform"
-                                      Margin="2"
-                                      HorizontalAlignment="Center"
-                                      VerticalAlignment="Center" />
-                            </Grid>
+                        <TextBlock Text="—" Classes="muted" VerticalAlignment="Center" />
+                        <Border Classes="step" Background="Transparent">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <TextBlock Text="2" Classes="stepNum" />
+                                <TextBlock Text="计算特征" VerticalAlignment="Center" />
+                            </StackPanel>
                         </Border>
-                        <!-- 重复图文件名（框外） -->
-                        <TextBlock Grid.Column="1" Grid.Row="1"
-                                  Text="{Binding SelectedDuplicate.FileName}" 
-                                  FontSize="9" 
-                                  TextWrapping="Wrap"
-                                  TextTrimming="CharacterEllipsis"
-                                  Margin="2,2"
-                                  HorizontalAlignment="Center"
-                                  ToolTip.Tip="{Binding SelectedDuplicate.Path}" />
-
-                        <!-- 相似度信息 -->
-                        <TextBlock Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="2"
-                                  Text="{Binding SelectedDuplicate.Similarity, StringFormat='相似度: {0:F3}'}"
-                                  HorizontalAlignment="Center"
-                                  VerticalAlignment="Center"
-                                  FontSize="11"
-                                  FontWeight="Bold"
-                                  Foreground="#666"
-                                  Margin="0,5" />
-                        </Grid>
+                        <TextBlock Text="—" Classes="muted" VerticalAlignment="Center" />
+                        <Border Classes="step" Background="Transparent">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <TextBlock Text="3" Classes="stepNum" />
+                                <TextBlock Text="查找重复" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Border>
                     </StackPanel>
                 </Border>
 
-                <!-- 底部操作按钮 -->
-                <Border BorderBrush="#ccc" BorderThickness="1" Padding="5" Margin="5">
-                    <StackPanel>
-                        <TextBlock Text="操作" FontWeight="Bold" Margin="0,0,0,5" FontSize="11" />
-                        <UniformGrid Columns="2" Rows="1">
-                            <Button Content="撤回删除"
-                                   Classes="undo"
-                                   Command="{Binding UndoDeleteCommand}"
-                                   ToolTip.Tip="从回收站恢复已删除的文件" />
-                            <Button Content="删除重复"
-                                   Classes="delete"
-                                   Command="{Binding DeleteDuplicateCommand}"
-                                   ToolTip.Tip="删除当前选中的重复图像" />
-                        </UniformGrid>
-                    </StackPanel>
-                </Border>
-
-            </StackPanel>
+                <!-- 已载入数量 -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8"
+                            VerticalAlignment="Center">
+                    <TextBlock Classes="caption" VerticalAlignment="Center"
+                               Text="{Binding LoadedImageCount, StringFormat='已载入 {0} 张'}" />
+                </StackPanel>
+            </Grid>
         </Border>
 
-    </Grid>
+        <!-- ══════════════ 主内容区 ══════════════ -->
+        <Grid Grid.Row="1" ColumnDefinitions="360,*" Margin="16">
 
+            <!-- ─────── 左：控制面板 ─────── -->
+            <Grid Grid.Column="0" Margin="0,0,16,0" RowDefinitions="*,Auto">
+
+                <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto">
+                    <StackPanel Spacing="12">
+
+                        <!-- ═══ 目录 ═══ -->
+                        <Border Classes="card">
+                            <StackPanel Spacing="10">
+                                <TextBlock Text="目录" Classes="section" />
+
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="输入目录" Classes="caption" />
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBox Grid.Column="0"
+                                                 Watermark="选择包含图像的目录"
+                                                 Text="{Binding InputDirectory}" />
+                                        <Button Grid.Column="1" Content="浏览"
+                                                Classes="subtle"
+                                                Click="BrowseInputDirectory_Click" />
+                                    </Grid>
+                                </StackPanel>
+
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="输出目录" Classes="caption" />
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBox Grid.Column="0"
+                                                 Watermark="留空表示不移动文件"
+                                                 Text="{Binding OutputDirectory}" />
+                                        <Button Grid.Column="1" Content="浏览"
+                                                Classes="subtle"
+                                                Click="BrowseOutputDirectory_Click" />
+                                    </Grid>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- ═══ 算法 ═══ -->
+                        <Border Classes="card">
+                            <StackPanel Spacing="12">
+
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="算法" Classes="section" Margin="0" />
+                                    <ComboBox SelectedIndex="{Binding CurrentAlgorithm}"
+                                              HorizontalAlignment="Stretch">
+                                        <ComboBoxItem Content="FileHash · 文件哈希" />
+                                        <ComboBoxItem Content="DHash · 差异哈希（推荐）" />
+                                        <ComboBoxItem Content="AHash · 平均哈希" />
+                                        <ComboBoxItem Content="PHash · 感知哈希" />
+                                        <ComboBoxItem Content="FastDup · 快速去重" />
+                                        <ComboBoxItem Content="Histogram · 颜色直方图" />
+                                        <ComboBoxItem Content="Template · 模板匹配" />
+                                        <ComboBoxItem Content="SSIM · 结构相似度" />
+                                        <ComboBoxItem Content="SIFT · 尺度不变特征" />
+                                        <ComboBoxItem Content="SURF(ORB) · 快速特征" />
+                                        <ComboBoxItem Content="Lance · 向量检索" />
+                                    </ComboBox>
+                                    <TextBlock Classes="caption" TextWrapping="Wrap"
+                                               Text="{Binding CurrentAlgorithm, Converter={StaticResource DescriptionText}}" />
+                                </StackPanel>
+
+                                <Separator />
+
+                                <!-- ═══ 相似度阈值：所有算法都有 ═══ -->
+                                <StackPanel Spacing="4">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBlock Grid.Column="0" Text="相似度阈值"
+                                                   Classes="caption" />
+                                        <TextBlock Grid.Column="1"
+                                                   Text="{Binding AlgorithmParameters.Threshold, StringFormat={}{0:F2}}"
+                                                   FontWeight="SemiBold" />
+                                    </Grid>
+                                    <Slider Minimum="30" Maximum="100"
+                                            IsSnapToTickEnabled="False"
+                                            Value="{Binding AlgorithmParameters.Threshold, Converter={StaticResource MultiplyConverter}, ConverterParameter=100}" />
+                                </StackPanel>
+
+                                <!-- ═══ 以下参数按算法动态显示 ═══ -->
+
+                                <!-- 哈希大小：FileHash/AHash/DHash/PHash -->
+                                <StackPanel Spacing="4"
+                                            IsVisible="{Binding CurrentAlgorithm, Converter={StaticResource ShowHashSize}}}">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBlock Grid.Column="0" Text="哈希大小" Classes="caption" />
+                                        <TextBlock Grid.Column="1"
+                                                   Text="{Binding AlgorithmParameters.HashSize}" FontWeight="SemiBold" />
+                                    </Grid>
+                                    <Slider Minimum="4" Maximum="16" TickFrequency="4"
+                                            IsSnapToTickEnabled="True"
+                                            Value="{Binding AlgorithmParameters.HashSize}" />
+                                </StackPanel>
+
+                                <!-- 哈希权重：AHash/DHash -->
+                                <StackPanel Spacing="4"
+                                            IsVisible="{Binding CurrentAlgorithm, Converter={StaticResource ShowHashWeight}}}">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBlock Grid.Column="0" Text="哈希权重" Classes="caption" />
+                                        <TextBlock Grid.Column="1"
+                                                   Text="{Binding AlgorithmParameters.HashWeight, StringFormat={}{0:F2}}"
+                                                   FontWeight="SemiBold" />
+                                    </Grid>
+                                    <Slider Minimum="0" Maximum="100"
+                                            Value="{Binding AlgorithmParameters.HashWeight, Converter={StaticResource MultiplyConverter}, ConverterParameter=100}" />
+                                </StackPanel>
+
+                                <!-- 窗口大小：多算法共用 -->
+                                <StackPanel Spacing="4"
+                                            IsVisible="{Binding CurrentAlgorithm, Converter={StaticResource ShowWindowSize}}}">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBlock Grid.Column="0" Text="窗口大小" Classes="caption" />
+                                        <TextBlock Grid.Column="1"
+                                                   Text="{Binding AlgorithmParameters.WindowSize}" FontWeight="SemiBold" />
+                                    </Grid>
+                                    <Slider Minimum="3" Maximum="21" TickFrequency="2"
+                                            IsSnapToTickEnabled="True"
+                                            Value="{Binding AlgorithmParameters.WindowSize}" />
+                                </StackPanel>
+
+                                <!-- 缩略图大小：FastDup -->
+                                <StackPanel Spacing="4"
+                                            IsVisible="{Binding CurrentAlgorithm, Converter={StaticResource ShowThumbSize}}}">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBlock Grid.Column="0" Text="缩略图大小" Classes="caption" />
+                                        <TextBlock Grid.Column="1"
+                                                   Text="{Binding AlgorithmParameters.ThumbSize}" FontWeight="SemiBold" />
+                                    </Grid>
+                                    <Slider Minimum="32" Maximum="256" TickFrequency="32"
+                                            IsSnapToTickEnabled="True"
+                                            Value="{Binding AlgorithmParameters.ThumbSize}" />
+                                </StackPanel>
+
+                                <!-- 直方图箱数：Histogram -->
+                                <StackPanel Spacing="4"
+                                            IsVisible="{Binding CurrentAlgorithm, Converter={StaticResource ShowBins}}}">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBlock Grid.Column="0" Text="直方图箱数" Classes="caption" />
+                                        <TextBlock Grid.Column="1"
+                                                   Text="{Binding AlgorithmParameters.Bins}" FontWeight="SemiBold" />
+                                    </Grid>
+                                    <Slider Minimum="32" Maximum="256" TickFrequency="32"
+                                            IsSnapToTickEnabled="True"
+                                            Value="{Binding AlgorithmParameters.Bins}" />
+                                </StackPanel>
+
+                                <!-- 块大小：Template/SSIM -->
+                                <StackPanel Spacing="4"
+                                            IsVisible="{Binding CurrentAlgorithm, Converter={StaticResource ShowBlockSize}}}">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBlock Grid.Column="0" Text="匹配块大小" Classes="caption" />
+                                        <TextBlock Grid.Column="1"
+                                                   Text="{Binding AlgorithmParameters.BlockSize}" FontWeight="SemiBold" />
+                                    </Grid>
+                                    <Slider Minimum="50" Maximum="400" TickFrequency="50"
+                                            Value="{Binding AlgorithmParameters.BlockSize}" />
+                                </StackPanel>
+
+                                <!-- 特征点数：SIFT/SURF -->
+                                <StackPanel Spacing="4"
+                                            IsVisible="{Binding CurrentAlgorithm, Converter={StaticResource ShowFeatures}}}">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBlock Grid.Column="0" Text="特征点数上限" Classes="caption" />
+                                        <TextBlock Grid.Column="1"
+                                                   Text="{Binding AlgorithmParameters.Features}" FontWeight="SemiBold" />
+                                    </Grid>
+                                    <Slider Minimum="100" Maximum="5000" TickFrequency="100"
+                                            Value="{Binding AlgorithmParameters.Features}" />
+                                </StackPanel>
+
+                                <!-- 最小匹配数：SIFT/SURF -->
+                                <StackPanel Spacing="4"
+                                            IsVisible="{Binding CurrentAlgorithm, Converter={StaticResource ShowMinMatch}}}">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBlock Grid.Column="0" Text="判定重复所需匹配数" Classes="caption" />
+                                        <TextBlock Grid.Column="1"
+                                                   Text="{Binding AlgorithmParameters.MinMatch}" FontWeight="SemiBold" />
+                                    </Grid>
+                                    <Slider Minimum="4" Maximum="50"
+                                            Value="{Binding AlgorithmParameters.MinMatch}" />
+                                </StackPanel>
+
+                                <!-- Hessian 阈值：SURF 专属 -->
+                                <StackPanel Spacing="4"
+                                            IsVisible="{Binding CurrentAlgorithm, Converter={StaticResource ShowHessian}}}">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBlock Grid.Column="0" Text="Hessian 阈值" Classes="caption" />
+                                        <TextBlock Grid.Column="1"
+                                                   Text="{Binding AlgorithmParameters.HessianThreshold}" FontWeight="SemiBold" />
+                                    </Grid>
+                                    <Slider Minimum="100" Maximum="5000" TickFrequency="100"
+                                            Value="{Binding AlgorithmParameters.HessianThreshold}" />
+                                </StackPanel>
+
+                                <!-- 向量维度：Lance -->
+                                <StackPanel Spacing="4"
+                                            IsVisible="{Binding CurrentAlgorithm, Converter={StaticResource ShowDim}}}">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBlock Grid.Column="0" Text="向量维度" Classes="caption" />
+                                        <TextBlock Grid.Column="1"
+                                                   Text="{Binding AlgorithmParameters.Dim}" FontWeight="SemiBold" />
+                                    </Grid>
+                                    <Slider Minimum="64" Maximum="512" TickFrequency="64"
+                                            Value="{Binding AlgorithmParameters.Dim}" />
+                                </StackPanel>
+
+                                <!-- KNN 参数：Lance -->
+                                <StackPanel Spacing="4"
+                                            IsVisible="{Binding CurrentAlgorithm, Converter={StaticResource ShowKnn}}}">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBlock Grid.Column="0" Text="近邻数 K" Classes="caption" />
+                                        <TextBlock Grid.Column="1"
+                                                   Text="{Binding AlgorithmParameters.Knn}" FontWeight="SemiBold" />
+                                    </Grid>
+                                    <Slider Minimum="1" Maximum="20"
+                                            Value="{Binding AlgorithmParameters.Knn}" />
+                                </StackPanel>
+
+                            </StackPanel>
+                        </Border>
+
+                        <!-- ═══ 日志 ═══ -->
+                        <Border Classes="card">
+                            <StackPanel Spacing="8">
+                                <Grid ColumnDefinitions="*,Auto,Auto">
+                                    <TextBlock Grid.Column="0" Text="运行日志" Classes="section"
+                                               Margin="0" VerticalAlignment="Center" />
+                                    <Button Grid.Column="1" Content="清空" Classes="ghost subtle"
+                                            Command="{Binding ClearLogCommand}"
+                                            ToolTip.Tip="清空当前日志" />
+                                    <Button Grid.Column="2" Content="导出" Classes="ghost subtle"
+                                            Command="{Binding ExportLogCommand}"
+                                            ToolTip.Tip="导出日志到文件" />
+                                </Grid>
+                                <TextBox Text="{Binding LogText}" Classes="log"
+                                         Height="130" />
+                            </StackPanel>
+                        </Border>
+
+                    </StackPanel>
+                </ScrollViewer>
+
+                <!-- ═══ 底部：主操作 ═══ -->
+                <Border Grid.Row="1" Classes="card" Margin="0,12,0,0">
+                    <StackPanel Spacing="10">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Button Content="载入图像" Classes="accent" HorizontalAlignment="Stretch"
+                                    Command="{Binding LoadImagesCommand}"
+                                    ToolTip.Tip="扫描输入目录中的所有图像" />
+                            <Button Content="计算特征" HorizontalAlignment="Stretch"
+                                    Command="{Binding CalculateFeaturesCommand}"
+                                    ToolTip.Tip="按所选算法提取特征" />
+                            <Button Content="查找重复" HorizontalAlignment="Stretch"
+                                    Command="{Binding CompareFeaturesCommand}"
+                                    ToolTip.Tip="比对特征，找出重复图像" />
+                        </StackPanel>
+                        <Button Content="执行去重" Classes="accent large"
+                                HorizontalAlignment="Stretch"
+                                Command="{Binding ExecuteDeduplicationCommand}"
+                                ToolTip.Tip="对已标记的重复项执行删除或移动" />
+                        <Button Content="停止" Classes="ghost"
+                                HorizontalAlignment="Stretch"
+                                Command="{Binding StopCommand}" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- ─────── 右：对比工作区 ─────── -->
+            <Border Grid.Column="1" Classes="card" Padding="0">
+                <Grid RowDefinitions="Auto,*,Auto">
+
+                    <!-- 工作区标题 + 导航 -->
+                    <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="14,12,14,8">
+                        <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                            <TextBlock Text="对比工作区" Classes="h2" />
+                            <TextBlock Classes="caption"
+                                       Text="{Binding NavigationText}" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6"
+                                    VerticalAlignment="Center">
+                            <Button Classes="ghost" Content="◀"
+                                    Command="{Binding NavigatePreviousCommand}"
+                                    ToolTip.Tip="上一组 (Shift+↑)" />
+                            <Button Classes="ghost" Content="▶"
+                                    Command="{Binding NavigateNextCommand}"
+                                    ToolTip.Tip="下一组 (Shift+↓)" />
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- 对比区 -->
+                    <Grid Grid.Row="1" RowDefinitions="*,Auto" Margin="14,0,14,8">
+
+                        <Grid Grid.Row="0" ColumnDefinitions="*,*,Auto">
+
+                            <!-- 原图 -->
+                            <Border Grid.Column="0" Classes="preview" ClipToBounds="True">
+                                <Grid RowDefinitions="Auto,*">
+                                    <Border Grid.Row="0" Padding="10,7"
+                                            Background="{DynamicResource SurfaceAltBrush}">
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <TextBlock Grid.Column="0" Text="原图" Classes="section"
+                                                       Margin="0" />
+                                            <TextBlock Grid.Column="1" Classes="caption"
+                                                       VerticalAlignment="Center"
+                                                       Text="{Binding SelectedImage.Width, StringFormat={}{0} px}" />
+                                        </Grid>
+                                    </Border>
+                                    <Panel Grid.Row="1">
+                                        <Image Source="{Binding SelectedImageBitmap}"
+                                               Stretch="Uniform" Margin="8" />
+                                        <!-- 空状态 -->
+                                        <StackPanel IsVisible="{Binding SelectedImage, Converter={StaticResource IsNull}}"
+                                                    VerticalAlignment="Center" HorizontalAlignment="Center">
+                                            <TextBlock Text="未选择图像" Classes="muted"
+                                                       HorizontalAlignment="Center" />
+                                        </StackPanel>
+                                    </Panel>
+                                    <!-- 文件名条 -->
+                                    <Border Grid.Row="0" VerticalAlignment="Bottom"
+                                            IsVisible="False" />
+                                </Grid>
+                            </Border>
+
+                            <!-- 重复图 -->
+                            <Border Grid.Column="1" Classes="preview" ClipToBounds="True">
+                                <Grid RowDefinitions="Auto,*">
+                                    <Border Grid.Row="0" Padding="10,7"
+                                            Background="{DynamicResource SurfaceAltBrush}">
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <TextBlock Grid.Column="0" Text="重复图像" Classes="section"
+                                                       Margin="0" />
+                                            <!-- 相似度徽章 -->
+                                            <Border Grid.Column="1"
+                                                    Background="{DynamicResource SurfaceSunkenBrush}"
+                                                    CornerRadius="4" Padding="8,2">
+                                                <TextBlock FontWeight="SemiBold" FontSize="13"
+                                                           Text="{Binding SelectedDuplicate.Similarity, StringFormat='{}{0:P1}'}" />
+                                            </Border>
+                                        </Grid>
+                                    </Border>
+                                    <Panel Grid.Row="1">
+                                        <Image Source="{Binding SelectedDuplicateImageData.BitmapImage}"
+                                               Stretch="Uniform" Margin="8" />
+                                        <StackPanel IsVisible="{Binding SelectedDuplicate, Converter={StaticResource IsNull}}"
+                                                    VerticalAlignment="Center" HorizontalAlignment="Center">
+                                            <TextBlock Text="未选择重复项" Classes="muted"
+                                                       HorizontalAlignment="Center" />
+                                        </StackPanel>
+                                    </Panel>
+                                </Grid>
+                            </Border>
+
+                            <!-- 重复项列表 -->
+                            <Border Grid.Column="2" Classes="preview" Width="220">
+                                <Grid RowDefinitions="Auto,*">
+                                    <Border Grid.Row="0" Padding="10,7"
+                                            Background="{DynamicResource SurfaceAltBrush}">
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <TextBlock Grid.Column="0" Text="重复项" Classes="section"
+                                                       Margin="0" />
+                                            <TextBlock Grid.Column="1" Classes="caption"
+                                                       VerticalAlignment="Center"
+                                                       Text="{Binding CurrentDuplicates.Count, StringFormat='{}{0} 项'}" />
+                                        </Grid>
+                                    </Border>
+                                    <ListBox Grid.Row="1"
+                                             ItemsSource="{Binding CurrentDuplicates}"
+                                             SelectedItem="{Binding SelectedDuplicate}"
+                                             Margin="6">
+                                        <ListBox.ContextMenu>
+                                            <ContextMenu>
+                                                <MenuItem Header="移出列表"
+                                                    Command="{Binding RemoveFromListCommand}" />
+                                                <MenuItem Header="删除此文件"
+                                                          Command="{Binding DeleteDuplicateFileCommand}" />
+                                                <Separator />
+                                                <MenuItem Header="与原图对调"
+                                                    Command="{Binding SwapWithOriginalCommand}" />
+                                                <MenuItem Header="用此替换原图"
+                                                          Command="{Binding ReplaceImagesCommand}" />
+                                            </ContextMenu>
+                                        </ListBox.ContextMenu>
+                                        <ListBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <Grid ColumnDefinitions="*,Auto">
+                                                    <TextBlock Grid.Column="0"
+                                                               Text="{Binding FileName}"
+                                                               TextTrimming="CharacterEllipsis"
+                                                               VerticalAlignment="Center"
+                                                               ToolTip.Tip="{Binding Path}" />
+                                                    <TextBlock Grid.Column="1"
+                                                               Text="{Binding Similarity, StringFormat={}{0:F2}}"
+                                                               Classes="caption"
+                                                               VerticalAlignment="Center" />
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ListBox.ItemTemplate>
+                                    </ListBox>
+                                </Grid>
+                            </Border>
+                        </Grid>
+
+                        <!-- 文件信息条 -->
+                        <Grid Grid.Row="1" ColumnDefinitions="*,*"
+                              Margin="0,10,0,0">
+                            <StackPanel Grid.Column="0" Spacing="2">
+                                <TextBlock Text="{Binding SelectedImage.FileName}"
+                                           TextTrimming="CharacterEllipsis"
+                                           ToolTip.Tip="{Binding SelectedImage.FilePath}" />
+                                <TextBlock Classes="caption"
+                                           Text="{Binding SelectedImage.FileSize, StringFormat='{}{0:N0} 字节'}" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Spacing="2">
+                                <TextBlock Text="{Binding SelectedDuplicate.FileName}"
+                                           TextTrimming="CharacterEllipsis"
+                                           ToolTip.Tip="{Binding SelectedDuplicate.Path}" />
+                                <TextBlock Classes="caption"
+                                           Text="{Binding StatusMessage}" />
+                            </StackPanel>
+                        </Grid>
+                    </Grid>
+
+                    <!-- 底部操作栏 -->
+                    <Border Grid.Row="2" Padding="14,12"
+                            Background="{DynamicResource SurfaceAltBrush}"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="0,1,0,0"
+                            CornerRadius="0,0,10,10">
+                        <Grid ColumnDefinitions="*,Auto,Auto,Auto">
+                            <TextBlock Grid.Column="0" Classes="caption"
+                                       VerticalAlignment="Center"
+                                       Text="Shift+↑ / Shift+↓ 切换组" />
+
+                            <Button Grid.Column="1" Content="对调文件名"
+                                    Command="{Binding SwapWithOriginalCommand}"
+                                    ToolTip.Tip="交换原图与选中重复项的文件名" />
+                            <Button Grid.Column="2" Content="撤回删除"
+                                    Command="{Binding UndoDeleteCommand}"
+                                    ToolTip.Tip="从回收站恢复已删除的文件" />
+                            <Button Grid.Column="3" Content="删除重复" Classes="danger"
+                                    Command="{Binding DeleteDuplicateCommand}"
+                                    ToolTip.Tip="删除当前重复项（移入回收站，可撤回）" />
+                        </Grid>
+                    </Border>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- ══════════════ 状态栏 ══════════════ -->
+        <Border Grid.Row="2"
+                Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="0,1,0,0"
+                Padding="20,8">
+            <Grid ColumnDefinitions="*,Auto">
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10"
+                            VerticalAlignment="Center">
+                    <TextBlock Text="{Binding StatusMessage}" FontSize="12" />
+                    <ProgressBar Width="140" Height="4"
+                                 Value="{Binding Progress}" Maximum="100" />
+                </StackPanel>
+                <TextBlock Grid.Column="1" Classes="caption"
+                           VerticalAlignment="Center"
+                           Text="{Binding LoadedImageCount, StringFormat='{}{0} 张图像'}" />
+            </Grid>
+        </Border>
+    </Grid>
 </Window>

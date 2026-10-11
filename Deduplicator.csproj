@@ -22,6 +22,8 @@
 
   <ItemGroup>
     <AvaloniaResource Include="Assets\**" />
+    <!-- 控件样式：与应用级资源（App.axaml）分开，便于独立维护 -->
+    <AvaloniaResource Include="Views\Controls.axaml" />
   </ItemGroup>
 
   <ItemGroup>

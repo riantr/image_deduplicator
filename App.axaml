@@ -1,8 +1,64 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:converters="using:Deduplicator.Converters"
              x:Class="Deduplicator.App"
-             RequestedThemeVariant="Default">
+             RequestedThemeVariant="Light">
+
+    <!--
+        设计系统：配色、间距、圆角、字体层级。
+
+        这里直接内联而非拆成独立文件 —— Avalonia 11 缺少 ResourceInclude，
+        用 StyleInclude 引入 ResourceDictionary 会在运行时抛
+        InvalidCastException；而合并到 Styles 里又会把「资源」和「样式」混为一谈。
+        考虑到只有一个窗口，内联是最简单可靠的方案。
+
+        若将来要支持深色主题，把这些定义移入
+        <Application.Resources><ResourceDictionary><ResourceDictionary.ThemeDictionaries>
+    -->
+    <Application.Resources>
+        <ResourceDictionary>
+
+            <!-- ===== 基础色板 ===== -->
+            <SolidColorBrush x:Key="SurfaceBrush" Color="#FFFFFF" />
+            <SolidColorBrush x:Key="SurfaceAltBrush" Color="#F7F8FA" />
+            <SolidColorBrush x:Key="SurfaceSunkenBrush" Color="#EFF1F4" />
+            <SolidColorBrush x:Key="BorderBrushSoft" Color="#E2E5EA" />
+            <SolidColorBrush x:Key="BorderBrushStrong" Color="#CBD0D8" />
+
+            <SolidColorBrush x:Key="TextPrimaryBrush" Color="#1A1D21" />
+            <SolidColorBrush x:Key="TextSecondaryBrush" Color="#5F6672" />
+            <SolidColorBrush x:Key="TextTertiaryBrush" Color="#8B929E" />
+
+            <SolidColorBrush x:Key="AccentBrush" Color="#4C6EF5" />
+            <SolidColorBrush x:Key="AccentHoverBrush" Color="#4263EB" />
+            <SolidColorBrush x:Key="AccentPressedBrush" Color="#3B5BDB" />
+            <SolidColorBrush x:Key="SuccessBrush" Color="#2F9E44" />
+            <SolidColorBrush x:Key="WarningBrush" Color="#F08C00" />
+            <SolidColorBrush x:Key="DangerBrush" Color="#E03131" />
+            <SolidColorBrush x:Key="OnAccentBrush" Color="#FFFFFF" />
+
+            <!-- ===== 字体层级 ===== -->
+            <FontFamily x:Key="FontFamilyBase">Microsoft YaHei UI, Segoe UI, Sans-serif</FontFamily>
+            <FontFamily x:Key="FontFamilyMono">Cascadia Mono, Consolas, monospace</FontFamily>
+
+            <x:Double x:Key="FontSizeCaption">11</x:Double>
+            <x:Double x:Key="FontSizeBody">13</x:Double>
+            <x:Double x:Key="FontSizeTitle">15</x:Double>
+            <x:Double x:Key="FontSizeDisplay">20</x:Double>
+
+            <!-- ===== 圆角 ===== -->
+            <CornerRadius x:Key="RadiusSm">4</CornerRadius>
+            <CornerRadius x:Key="RadiusMd">6</CornerRadius>
+            <CornerRadius x:Key="RadiusLg">10</CornerRadius>
+
+            <!-- 滑块倍率换算（0-1 阈值 ↔ 0-100 滑块区间） -->
+            <converters:MultiplyConverter x:Key="MultiplyConverter" />
+
+        </ResourceDictionary>
+    </Application.Resources>
+
     <Application.Styles>
         <FluentTheme />
+        <StyleInclude Source="avares://Deduplicator/Views/Controls.axaml" />
     </Application.Styles>
 </Application>

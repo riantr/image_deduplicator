@@ -14,6 +14,9 @@
 
   <ItemGroup>
     <PackageReference Include="OpenCvSharp4" Version="4.10.0.20241108" />
+    <!-- UI 无头验证：XAML 只在运行时解析，需真实加载控件树才能发现问题 -->
+    <PackageReference Include="Avalonia.Headless" Version="11.0.10" />
+    <PackageReference Include="Avalonia.Skia" Version="11.0.10" />
   </ItemGroup>
 
   <ItemGroup>
