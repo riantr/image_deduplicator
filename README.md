@@ -148,6 +148,19 @@ dotnet run --project Deduplicator.Tests -c Release -- --profile <图像目录>
 
 输出各算法的特征耗时、比对耗时与候选量，按耗时排序以突出瓶颈。
 
+另外两个辅助工具：
+
+```bash
+# 分阶段剖析：解码 / 灰度 / 代理特征 / 各算法核心
+dotnet run --project Deduplicator.Tests -c Release -- --stage <目录>
+
+# 验证工作尺寸对相似度质量的影响
+dotnet run --project Deduplicator.Tests -c Release -- --quality <目录>
+```
+
+> 注意：`--profile` 是并行测量，`--stage` 是单线程测量。
+> OpenCV 内部已有多线程，外层并行会产生线程竞争，两者需分开看。
+
 ### 实测结果（360 张 400×300 图）
 
 引入代理哈希预筛后，比对总耗时从 199 秒降至 1.8 秒：
@@ -160,6 +173,9 @@ dotnet run --project Deduplicator.Tests -c Release -- --profile <图像目录>
 | Template | 5,226ms | 19ms | 275× |
 | FastDup | 3,040ms | 6ms | 507× |
 | **合计** | **199,309ms** | **1,761ms** | **113×** |
+
+特征计算阶段也做了优化：SIFT/ORB 的工作尺寸上限设为 256
+（实测 400/320/256/192 下相似度完全一致），SIFT 单张耗时从 17.68ms 降至 8.27ms。
 
 ## 持续集成
 
