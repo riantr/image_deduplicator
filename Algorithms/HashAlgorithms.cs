@@ -169,8 +169,85 @@ public static class HashAlgorithms
     }
 
 /// <summary>
+    /// 计算代理感知哈希（用于慢速算法的预筛）。
+    /// </summary>
+    /// <remarks>
+    /// <para>做法：把图像缩放到 8×8 灰度网格，以网格均值为基准生成 64 位哈希。</para>
+    /// <para>与 DHash/PHash 的区别在于<b>目的不同</b>：这里不需要最强的区分度，
+    /// 而需要「结构相似 ⟹ 哈希接近」这一<b>单向</b>保证，用作预筛的必要条件。
+    /// 因此刻意选更粗的网格（8×8），使噪声影响被平均掉，
+    /// 保证真正相似的图必然落在相近的哈希邻域内。</para>
+    /// </remarks>
+    /// <param name="grayImage">已灰度化的图像</param>
+    /// <param name="gridSize">网格边长（默认 8，产生 64 位哈希）</param>
+    public static ulong ComputeProxyHash(Mat grayImage, int gridSize = 8)
+    {
+        if (grayImage == null || grayImage.Empty() || gridSize <= 0)
+            return 0UL;
+
+        try
+        {
+            using var small = grayImage.Resize(
+        new Size(gridSize, gridSize),
+   interpolation: InterpolationFlags.Area);
+
+      Scalar mean = Cv2.Mean(small);
+            double avg = mean.Val0;
+
+            ulong hash = 0UL;
+            int bit = 0;
+
+            for (int y = 0; y < gridSize && bit < 64; y++)
+            {
+      for (int x = 0; x < gridSize && bit < 64; x++)
+       {
+                    if (small.At<byte>(y, x) > avg)
+     hash |= 1UL << bit;
+
+   bit++;
+      }
+            }
+
+    return hash;
+        }
+        catch (Exception ex)
+        {
+    System.Diagnostics.Debug.WriteLine($"代理哈希计算失败: {ex.Message}");
+      return 0UL;
+        }
+    }
+
+    /// <summary>
+    /// 计算图像的平均亮度与对比度（归一化到 0-1），用于极廉价的一维剪枝
+    /// </summary>
+    public static (double mean, double contrast) ComputeLumaStats(Mat grayImage)
+    {
+        if (grayImage == null || grayImage.Empty())
+  return (0, 0);
+
+        try
+        {
+            using var small = grayImage.Resize(new Size(64, 64), interpolation: InterpolationFlags.Area);
+
+   using var meanMat = new Mat();
+   using var stdMat = new Mat();
+        Cv2.MeanStdDev(small, meanMat, stdMat);
+
+            double mean = meanMat.At<double>(0, 0) / 255.0;
+    double std = stdMat.At<double>(0, 0) / 255.0;
+
+   return (Math.Clamp(mean, 0, 1), Math.Clamp(std, 0, 1));
+        }
+  catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"亮度统计失败: {ex.Message}");
+     return (0, 0);
+        }
+    }
+
+    /// <summary>
     /// 将哈希按位切分为若干段，用于 LSH 分桶预筛
- /// </summary>
+    /// </summary>
     /// <remarks>
     /// <b>关键</b>：各段必须<b>完整覆盖全部 64 位</b>。若段数与每段位数不自洽
 /// （例如 10 段 × 6 位 = 60 位），末尾若干位将永远不参与索引，

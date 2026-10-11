@@ -22,11 +22,27 @@ public static class Program
         Console.WriteLine($"测试数据目录：{workDir}");
         Console.WriteLine($"数据规模：{(quick ? "快速" : "完整")}");
 
-        try
+        // 性能剖析模式：对外部指定的目录运行，不生成测试数据
+        if (args.Contains("--profile"))
         {
-            TestData.Generate(workDir, quick);
+            string profileDir = args.FirstOrDefault(a => !a.StartsWith("--"))
+                ?? throw new ArgumentException("--profile 需要指定图像目录");
+            Profile.Run(profileDir);
+            return 0;
+        }
 
-            DeduplicationTests.Run(workDir);
+try
+        {
+        TestData.Generate(workDir, quick);
+
+  // 诊断入口需在数据生成之后运行，否则目录为空
+            if (args.Contains("--ssim"))
+            {
+         SsimDiag.Run(workDir);
+     return 0;
+}
+
+      DeduplicationTests.Run(workDir);
             FileSafetyTests.Run(workDir);
         }
         catch (Exception ex)

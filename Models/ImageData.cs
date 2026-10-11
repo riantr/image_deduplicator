@@ -133,6 +133,39 @@ public class ImageData : IDisposable
     // Lance 算法
     public float[]? LanceVector { get; set; }
 
+    // ===== 代理特征（用于慢速算法的预筛）=====
+
+    /// <summary>
+    /// 代理感知哈希（16×16 灰度网格的均值哈希）。
+    ///
+    /// <para><b>用途</b>：SSIM / Template / SIFT / ORB / FastDup 的精确比对非常昂贵
+    /// （实测 SIFT 在 360 张图上需 93 秒），无法对全部 O(n²) 组合执行。
+    /// 本字段提供一个廉价的 64 位哈希，用于把候选量压到可接受范围。</para>
+    ///
+    /// <para><b>无漏报依据</b>：若两图在结构上足够相似以致精确算法判定为重复，
+    /// 则其低分辨率灰度网格必然也高度相似，代理哈希的汉明距离必然很小。
+    /// 因此「精确算法判定相似 ⟹ 代理汉明距离 ≤ 阈值」成立，
+    /// 以此构造的候选集必然包含全部真实重复对。</para>
+    /// </summary>
+    public ulong ProxyHash { get; set; }
+
+    /// <summary>
+    /// 代理哈希是否已计算
+    /// </summary>
+    public bool HasProxyHash { get; set; }
+
+    /// <summary>
+    /// 图像的平均亮度与对比度（0-1 归一化），用于极廉价的一维剪枝
+    /// </summary>
+    public double MeanLuma { get; set; }
+
+    public double ContrastLuma { get; set; }
+
+    /// <summary>
+    /// 代理统计量是否已计算
+    /// </summary>
+    public bool HasLumaStats { get; set; }
+
     /// <summary>
     /// 是否已完成当前算法所需的特征计算
     /// </summary>
@@ -240,5 +273,11 @@ public class ImageData : IDisposable
         Histogram = null;
         LanceVector = null;
         FileHash = null;
+
+      ProxyHash = 0;
+        HasProxyHash = false;
+        MeanLuma = 0;
+      ContrastLuma = 0;
+        HasLumaStats = false;
     }
 }

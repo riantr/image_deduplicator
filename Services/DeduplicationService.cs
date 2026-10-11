@@ -119,6 +119,40 @@ public class DeduplicationService
     }
 
     /// <summary>
+    /// 该算法是否需要代理特征（仅慢速算法需要）
+    /// </summary>
+    private static bool NeedsProxyFeature(AlgorithmType algorithmType)
+    {
+        return algorithmType is AlgorithmType.Ssim
+            or AlgorithmType.Template
+    or AlgorithmType.FastDup
+  or AlgorithmType.Sift
+            or AlgorithmType.Surf;
+    }
+
+    /// <summary>
+    /// 计算代理特征：8×8 代理哈希 + 亮度统计
+    /// </summary>
+    private static void ComputeProxyFeatures(ImageData data, Mat image)
+    {
+        Mat gray = image.Channels() == 1 ? image.Clone() : image.CvtColor(ColorConversionCodes.BGR2GRAY);
+        try
+        {
+   data.ProxyHash = HashAlgorithms.ComputeProxyHash(gray);
+            data.HasProxyHash = true;
+
+       var (mean, contrast) = HashAlgorithms.ComputeLumaStats(gray);
+      data.MeanLuma = mean;
+   data.ContrastLuma = contrast;
+      data.HasLumaStats = true;
+        }
+        finally
+  {
+      gray.Dispose();
+   }
+    }
+
+    /// <summary>
     /// 计算单张图像的特征（临时解码，用完即释放）
     /// </summary>
     private void ComputeFeature(ImageData data, AlgorithmType algorithmType, AlgorithmParameters parameters)
@@ -135,8 +169,14 @@ public class DeduplicationService
         if (image.Empty())
             return;
 
-        // 图像质量指标（用于挑选最佳原图），所有算法通用
+// 图像质量指标（用于挑选最佳原图），所有算法通用
         data.ColorRichness = ImageHelper.CalculateColorRichness(image);
+
+   // 慢速算法需要代理特征做预筛；已有哈希特征则复用解码结果，避免重复解码
+      if (NeedsProxyFeature(algorithmType))
+        {
+     ComputeProxyFeatures(data, image);
+        }
 
         switch (algorithmType)
         {
