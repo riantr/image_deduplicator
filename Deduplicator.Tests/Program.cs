@@ -60,8 +60,8 @@ try
             return 0;
             }
 
- UiTests.Run();
-        DeduplicationTests.Run(workDir);
+UiTests.Run();
+            DeduplicationTests.Run(workDir);
             FileSafetyTests.Run(workDir);
         }
         catch (Exception ex)

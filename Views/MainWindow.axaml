@@ -11,7 +11,7 @@
         Width="1440" Height="860"
         MinWidth="1100" MinHeight="680"
         WindowStartupLocation="CenterScreen"
-        Background="{DynamicResource SurfaceAltBrush}">
+        Background="{DynamicResource SolidBackgroundFillColorBaseBrush}">
 
     <Design.DataContext>
         <vm:MainViewModel />
@@ -43,8 +43,8 @@
 
         <!-- ══════════════ 顶部标题栏 ══════════════ -->
         <Border Grid.Row="0"
-                Background="{DynamicResource SurfaceBrush}"
-                BorderBrush="{DynamicResource BorderBrush}"
+                Background="{DynamicResource LayerFillColorDefaultBrush}"
+                BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
                 BorderThickness="0,0,0,1"
                 Padding="20,12">
             <Grid ColumnDefinitions="Auto,*,Auto">
@@ -52,7 +52,7 @@
                 <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10"
                             VerticalAlignment="Center">
                     <Border Width="28" Height="28"
-                            Background="{DynamicResource AccentBrush}"
+                            Background="{DynamicResource AccentFillColorDefaultBrush}"
                             CornerRadius="6">
                         <TextBlock Text="重" Foreground="White"
                                    FontWeight="Bold" FontSize="15"
@@ -64,7 +64,7 @@
 
                 <!-- 主流程：把三步显式化，让用户知道自己在哪一步 -->
                 <Border Grid.Column="1" HorizontalAlignment="Center"
-                        Background="{DynamicResource SurfaceSunkenBrush}"
+                        Background="{DynamicResource ControlFillColorSecondaryBrush}"
                         CornerRadius="8" Padding="4">
                     <StackPanel Orientation="Horizontal" Spacing="4">
                         <Border Classes="step" Background="Transparent">
@@ -399,7 +399,7 @@
                             <Border Grid.Column="0" Classes="preview" ClipToBounds="True">
                                 <Grid RowDefinitions="Auto,*">
                                     <Border Grid.Row="0" Padding="10,7"
-                                            Background="{DynamicResource SurfaceAltBrush}">
+                                            Background="{DynamicResource SolidBackgroundFillColorBaseBrush}">
                                         <Grid ColumnDefinitions="*,Auto">
                                             <TextBlock Grid.Column="0" Text="原图" Classes="section"
                                                        Margin="0" />
@@ -428,13 +428,13 @@
                             <Border Grid.Column="1" Classes="preview" ClipToBounds="True">
                                 <Grid RowDefinitions="Auto,*">
                                     <Border Grid.Row="0" Padding="10,7"
-                                            Background="{DynamicResource SurfaceAltBrush}">
+                                            Background="{DynamicResource SolidBackgroundFillColorBaseBrush}">
                                         <Grid ColumnDefinitions="*,Auto">
                                             <TextBlock Grid.Column="0" Text="重复图像" Classes="section"
                                                        Margin="0" />
                                             <!-- 相似度徽章 -->
                                             <Border Grid.Column="1"
-                                                    Background="{DynamicResource SurfaceSunkenBrush}"
+                                                    Background="{DynamicResource ControlFillColorSecondaryBrush}"
                                                     CornerRadius="4" Padding="8,2">
                                                 <TextBlock FontWeight="SemiBold" FontSize="13"
                                                            Text="{Binding SelectedDuplicate.Similarity, StringFormat='{}{0:P1}'}" />
@@ -457,7 +457,7 @@
                             <Border Grid.Column="2" Classes="preview" Width="220">
                                 <Grid RowDefinitions="Auto,*">
                                     <Border Grid.Row="0" Padding="10,7"
-                                            Background="{DynamicResource SurfaceAltBrush}">
+                                            Background="{DynamicResource SolidBackgroundFillColorBaseBrush}">
                                         <Grid ColumnDefinitions="*,Auto">
                                             <TextBlock Grid.Column="0" Text="重复项" Classes="section"
                                                        Margin="0" />
@@ -525,8 +525,8 @@
 
                     <!-- 底部操作栏 -->
                     <Border Grid.Row="2" Padding="14,12"
-                            Background="{DynamicResource SurfaceAltBrush}"
-                            BorderBrush="{DynamicResource BorderBrush}"
+                            Background="{DynamicResource SolidBackgroundFillColorBaseBrush}"
+                            BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
                             BorderThickness="0,1,0,0"
                             CornerRadius="0,0,10,10">
                         <Grid ColumnDefinitions="*,Auto,Auto,Auto">
@@ -551,8 +551,8 @@
 
         <!-- ══════════════ 状态栏 ══════════════ -->
         <Border Grid.Row="2"
-                Background="{DynamicResource SurfaceBrush}"
-                BorderBrush="{DynamicResource BorderBrush}"
+                Background="{DynamicResource LayerFillColorDefaultBrush}"
+                BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
                 BorderThickness="0,1,0,0"
                 Padding="20,8">
             <Grid ColumnDefinitions="*,Auto">

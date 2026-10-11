@@ -1,218 +1,213 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  基础控件样式
+  控件样式
 
-  每个控件只在此定义一次，界面中不重复写样式。
-  按钮的语义变体通过 Classes 切换（accent / danger / ghost / subtle）。
+  遵循 Fluent Design 三点原则：
+    1. 颜色只引用语义资源（LayerFill / AccentFill / TextFill…），不硬编码色值，
+       因此能自动适配深色模式；
+    2. 尺寸取自规范刻度（按钮高 32、圆角 4、描边 1px）；
+    3. 交互态齐全：pointerover / pressed / disabled / focus。
 -->
 <Styles xmlns="https://github.com/avaloniaui"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+ xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-  <!-- ============ 文本 ============ -->
+  <!-- ══════════════ 文本层级 ══════════════ -->
   <Style Selector="TextBlock">
     <Setter Property="FontFamily" Value="{DynamicResource FontFamilyBase}" />
     <Setter Property="FontSize" Value="{DynamicResource FontSizeBody}" />
-    <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
   </Style>
 
-  <Style Selector="TextBlock.h1">
-    <Setter Property="FontSize" Value="{DynamicResource FontSizeDisplay}" />
+  <Style Selector="TextBlock.title">
+    <Setter Property="FontSize" Value="{DynamicResource FontSizeTitle}" />
     <Setter Property="FontWeight" Value="SemiBold" />
   </Style>
 
-  <Style Selector="TextBlock.h2">
-    <Setter Property="FontSize" Value="{DynamicResource FontSizeTitle}" />
+  <Style Selector="TextBlock.subtitle">
+    <Setter Property="FontSize" Value="{DynamicResource FontSizeSubtitle}" />
     <Setter Property="FontWeight" Value="SemiBold" />
   </Style>
 
   <Style Selector="TextBlock.caption">
     <Setter Property="FontSize" Value="{DynamicResource FontSizeCaption}" />
-    <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
   </Style>
 
   <Style Selector="TextBlock.muted">
-    <Setter Property="Foreground" Value="{DynamicResource TextTertiaryBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource TextFillColorTertiaryBrush}" />
   </Style>
 
-  <!-- 分区标题 -->
+  <!-- 分组标题 -->
   <Style Selector="TextBlock.section">
     <Setter Property="FontSize" Value="{DynamicResource FontSizeCaption}" />
     <Setter Property="FontWeight" Value="SemiBold" />
-    <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
-    <Setter Property="Margin" Value="0,0,0,8" />
+    <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
   </Style>
 
-  <!-- ============ 按钮 ============ -->
+  <!-- ══════════════ 按钮 ══════════════ -->
   <Style Selector="Button">
     <Setter Property="FontFamily" Value="{DynamicResource FontFamilyBase}" />
     <Setter Property="FontSize" Value="{DynamicResource FontSizeBody}" />
     <Setter Property="Height" Value="32" />
-    <Setter Property="Padding" Value="14,0" />
-    <Setter Property="CornerRadius" Value="{DynamicResource RadiusMd}" />
-    <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
-    <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+    <Setter Property="Padding" Value="12,0" />
+    <Setter Property="CornerRadius" Value="{DynamicResource ControlCornerRadius}" />
+    <Setter Property="Background" Value="{DynamicResource ControlFillColorDefaultBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource StrokeColorDefaultBrush}" />
     <Setter Property="BorderThickness" Value="1" />
   </Style>
 
   <Style Selector="Button:pointerover /template/ ContentPresenter">
-    <Setter Property="Background" Value="{DynamicResource SurfaceSunkenBrush}" />
+    <Setter Property="Background" Value="{DynamicResource ControlFillColorSecondaryBrush}" />
   </Style>
 
   <Style Selector="Button:pressed /template/ ContentPresenter">
-    <Setter Property="Background" Value="{DynamicResource BorderBrush}" />
+    <Setter Property="Background" Value="{DynamicResource ControlFillColorTertiaryBrush}" />
   </Style>
 
   <Style Selector="Button:disabled">
-    <Setter Property="Opacity" Value="0.45" />
+    <Setter Property="Background" Value="{DynamicResource ControlFillColorSecondaryBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource TextFillColorDisabledBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource CardStrokeColorDefaultBrush}" />
   </Style>
 
-  <!-- 主操作按钮 -->
+  <!-- 主操作：Accent 填充 -->
   <Style Selector="Button.accent">
-    <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
-    <Setter Property="Foreground" Value="{DynamicResource OnAccentBrush}" />
+    <Setter Property="Background" Value="{DynamicResource AccentFillColorDefaultBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource TextOnAccentFillColorPrimaryBrush}" />
     <Setter Property="BorderThickness" Value="0" />
   </Style>
   <Style Selector="Button.accent:pointerover /template/ ContentPresenter">
-    <Setter Property="Background" Value="{DynamicResource AccentHoverBrush}" />
+    <Setter Property="Background" Value="{DynamicResource AccentFillColorSecondaryBrush}" />
   </Style>
   <Style Selector="Button.accent:pressed /template/ ContentPresenter">
-    <Setter Property="Background" Value="{DynamicResource AccentPressedBrush}" />
+    <Setter Property="Background" Value="{DynamicResource AccentFillColorTertiaryBrush}" />
   </Style>
 
   <!-- 危险操作 -->
   <Style Selector="Button.danger">
-    <Setter Property="Background" Value="{DynamicResource DangerBrush}" />
-    <Setter Property="Foreground" Value="{DynamicResource OnAccentBrush}" />
+    <Setter Property="Background" Value="{DynamicResource SystemFillColorCriticalBrush}" />
+    <Setter Property="Foreground" Value="#FFFFFF" />
     <Setter Property="BorderThickness" Value="0" />
   </Style>
-  <Style Selector="Button.danger:pointerover /template/ ContentPresenter">
-    <Setter Property="Opacity" Value="0.88" />
-  </Style>
 
-  <!-- 无边框（工具栏图标按钮） -->
-  <Style Selector="Button.ghost">
+  <!-- 无边框：工具栏/图标区 -->
+  <Style Selector="Button.subtle">
     <Setter Property="Background" Value="Transparent" />
     <Setter Property="BorderThickness" Value="0" />
-    <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
   </Style>
-  <Style Selector="Button.ghost:pointerover /template/ ContentPresenter">
-    <Setter Property="Background" Value="{DynamicResource SurfaceSunkenBrush}" />
-    <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
-  </Style>
-
-  <!-- 次要按钮（小号，如浏览/清空） -->
-  <Style Selector="Button.subtle">
-    <Setter Property="Height" Value="28" />
-    <Setter Property="Padding" Value="10,0" />
-    <Setter Property="FontSize" Value="{DynamicResource FontSizeCaption}" />
+  <Style Selector="Button.subtle:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource ControlFillColorSecondaryBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
   </Style>
 
-  <!-- 大号主按钮（执行去重） -->
+  <!-- 大号主按钮 -->
   <Style Selector="Button.large">
-    <Setter Property="Height" Value="44" />
-    <Setter Property="FontSize" Value="{DynamicResource FontSizeTitle}" />
+    <Setter Property="Height" Value="40" />
     <Setter Property="FontWeight" Value="SemiBold" />
   </Style>
 
-  <!-- ============ 输入框 ============ -->
+  <!-- ══════════════ 输入 ══════════════ -->
   <Style Selector="TextBox">
     <Setter Property="FontFamily" Value="{DynamicResource FontFamilyBase}" />
     <Setter Property="FontSize" Value="{DynamicResource FontSizeBody}" />
     <Setter Property="Height" Value="32" />
     <Setter Property="Padding" Value="10,0" />
-    <Setter Property="CornerRadius" Value="{DynamicResource RadiusMd}" />
-    <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
-    <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
-  </Style>
-
-  <Style Selector="TextBox:pointerover /template/ ContentPresenter">
-    <Setter Property="BorderBrush" Value="{DynamicResource BorderStrongBrush}" />
+    <Setter Property="CornerRadius" Value="{DynamicResource ControlCornerRadius}" />
+    <Setter Property="Background" Value="{DynamicResource ControlFillColorDefaultBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource StrokeColorDefaultBrush}" />
   </Style>
 
   <Style Selector="TextBox:focus /template/ ContentPresenter">
-    <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource ControlStrokeColorAccentBrush}" />
+    <Setter Property="BorderThickness" Value="2" />
   </Style>
 
-  <!-- 日志输出：等宽字体、不换行、单色 -->
+  <!-- 日志：等宽、次级底色 -->
   <Style Selector="TextBox.log">
     <Setter Property="FontFamily" Value="{DynamicResource FontFamilyMono}" />
     <Setter Property="FontSize" Value="{DynamicResource FontSizeCaption}" />
-    <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
-    <Setter Property="Background" Value="{DynamicResource SurfaceSunkenBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+    <Setter Property="Background" Value="{DynamicResource SolidBackgroundFillColorBaseBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource CardStrokeColorDefaultBrush}" />
     <Setter Property="IsReadOnly" Value="True" />
-    <Setter Property="TextWrapping" Value="NoWrap" />
     <Setter Property="AcceptsReturn" Value="True" />
   </Style>
 
   <Style Selector="ComboBox">
     <Setter Property="Height" Value="32" />
-    <Setter Property="CornerRadius" Value="{DynamicResource RadiusMd}" />
+    <Setter Property="CornerRadius" Value="{DynamicResource ControlCornerRadius}" />
+    <Setter Property="FontFamily" Value="{DynamicResource FontFamilyBase}" />
     <Setter Property="FontSize" Value="{DynamicResource FontSizeBody}" />
   </Style>
 
+  <!-- ══════════════ 滑块 ══════════════ -->
   <Style Selector="Slider">
     <Setter Property="VerticalAlignment" Value="Center" />
   </Style>
 
-  <!-- ============ 容器 ============ -->
-  <!-- 卡片：白底圆角带边框 -->
+  <!-- ══════════════ 容器 ══════════════ -->
+  <!-- Fluent Layer：卡片 = 1px 描边 + 8px 圆角，不加阴影 -->
   <Style Selector="Border.card">
-    <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+    <Setter Property="Background" Value="{DynamicResource LayerFillColorDefaultBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource CardStrokeColorDefaultBrush}" />
     <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="CornerRadius" Value="{DynamicResource RadiusLg}" />
-    <Setter Property="Padding" Value="14" />
+    <Setter Property="CornerRadius" Value="{DynamicResource LayerCornerRadius}" />
+    <Setter Property="Padding" Value="16" />
   </Style>
 
-  <!-- 预览框：浅灰底，用于放图片 -->
+  <!-- 预览区：用次级填充与卡片区分 -->
   <Style Selector="Border.preview">
-    <Setter Property="Background" Value="{DynamicResource SurfaceSunkenBrush}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}" />
+    <Setter Property="Background" Value="{DynamicResource SolidBackgroundFillColorBaseBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource CardStrokeColorDefaultBrush}" />
     <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="CornerRadius" Value="{DynamicResource RadiusMd}" />
+    <Setter Property="CornerRadius" Value="{DynamicResource ControlCornerRadius}" />
   </Style>
 
-  <!-- ============ 进度 ============ -->
+  <!-- ══════════════ 进度 ══════════════ -->
   <Style Selector="ProgressBar">
-    <Setter Property="Height" Value="6" />
-    <Setter Property="Background" Value="{DynamicResource SurfaceSunkenBrush}" />
-    <Setter Property="Foreground" Value="{DynamicResource AccentBrush}" />
-    <Setter Property="CornerRadius" Value="3" />
+    <Setter Property="Height" Value="4" />
+    <Setter Property="Foreground" Value="{DynamicResource AccentFillColorDefaultBrush}" />
+    <Setter Property="Background" Value="{DynamicResource ControlFillColorSecondaryBrush}" />
   </Style>
 
-  <!-- ============ 列表 ============ -->
+  <!-- ══════════════ 列表 ══════════════ -->
   <Style Selector="ListBox">
     <Setter Property="Background" Value="Transparent" />
     <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Padding" Value="0" />
   </Style>
 
   <Style Selector="ListBoxItem">
     <Setter Property="Padding" Value="8,6" />
-    <Setter Property="CornerRadius" Value="{DynamicResource RadiusSm}" />
+    <Setter Property="CornerRadius" Value="{DynamicResource ControlCornerRadius}" />
+    <Setter Property="Margin" Value="2,0" />
   </Style>
 
   <Style Selector="ListBoxItem:pointerover /template/ ContentPresenter">
-    <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+    <Setter Property="Background" Value="{DynamicResource ControlFillColorSecondaryBrush}" />
   </Style>
 
   <Style Selector="ListBoxItem:selected /template/ ContentPresenter">
-    <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+    <Setter Property="Background" Value="{DynamicResource AccentFillColorDefaultBrush}" />
   </Style>
 
   <Style Selector="ListBoxItem:selected TextBlock">
-    <Setter Property="Foreground" Value="{DynamicResource OnAccentBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource TextOnAccentFillColorPrimaryBrush}" />
   </Style>
 
-  <!-- ============ 其他 ============ -->
+  <!-- ══════════════ 其他 ══════════════ -->
   <Style Selector="Separator">
-    <Setter Property="Background" Value="{DynamicResource BorderBrush}" />
+    <Setter Property="Background" Value="{DynamicResource DividerStrokeColorDefaultBrush}" />
     <Setter Property="Height" Value="1" />
+    <Setter Property="Margin" Value="0,12" />
   </Style>
 
   <Style Selector="ToolTip">
-    <Setter Property="Background" Value="{DynamicResource TextPrimaryBrush}" />
+    <Setter Property="Background" Value="{DynamicResource ControlFillColorTertiaryBrush}" />
+    <Setter Property="FontSize" Value="{DynamicResource FontSizeCaption}" />
   </Style>
 
 </Styles>

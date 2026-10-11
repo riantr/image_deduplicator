@@ -1,5 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Styling;
+using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Controls.Primitives;
 using Avalonia.Headless;
 using Avalonia.LogicalTree;
@@ -46,6 +48,9 @@ try
             return;
         }
 
+        // 设计令牌
+        DesignTokenTests();
+
         // 转换器逻辑
         ConverterTests();
 
@@ -90,6 +95,85 @@ try
     ///
   /// <para>异步执行 + 后台触发是必经路径，这里直接模拟该场景。</para>
  /// </summary>
+    /// <summary>
+    /// 验证 Fluent 设计令牌已正确加载，且深浅两套配色都存在。
+    ///
+    /// <para>设计令牌用 <c>ThemeDictionaries</c> 定义，跟随
+    /// <c>RequestedThemeVariant</c> 切换。若某项缺失，界面会退化为
+    /// 透明或黑色，且不会报错 —— 只能靠断言兜住。</para>
+    /// </summary>
+    private static void DesignTokenTests()
+    {
+        var res = (IResourceHost)Application.Current!;
+
+        // Fluent 语义色的键（本项目自定义，覆盖 WinUI 的命名体系）
+        string[] tokens =
+  {
+       "LayerFillColorDefaultBrush",
+            "SolidBackgroundFillColorBaseBrush",
+            "ControlFillColorDefaultBrush",
+      "ControlFillColorSecondaryBrush",
+            "CardStrokeColorDefaultBrush",
+            "DividerStrokeColorDefaultBrush",
+    "StrokeColorDefaultBrush",
+      "TextFillColorPrimaryBrush",
+   "TextFillColorSecondaryBrush",
+      "TextFillColorTertiaryBrush",
+    "TextFillColorDisabledBrush",
+            "TextOnAccentFillColorPrimaryBrush",
+            "AccentFillColorDefaultBrush",
+            "AccentFillColorSecondaryBrush",
+            "AccentFillColorTertiaryBrush",
+            "ControlStrokeColorAccentBrush",
+        "SystemFillColorSuccessBrush",
+        "SystemFillColorCautionBrush",
+   "SystemFillColorCriticalBrush",
+        };
+
+    // 颜色令牌定义在 ThemeDictionaries 中，必须显式指定主题才能查到。
+        // 本轮踩过的坑：传 null 主题会全部查不到，看起来像"令牌缺失"。
+      var missingLight = new List<string>();
+        foreach (var key in tokens)
+     {
+            if (!res.TryFindResource(key, ThemeVariant.Light, out var lv) || lv == null)
+          missingLight.Add(key);
+        }
+
+        // 深色模式下同样要齐全 —— 否则切到深色会退化成不可读
+        var missingDark = new List<string>();
+        foreach (var key in tokens)
+  {
+  if (!res.TryFindResource(key, ThemeVariant.Dark, out var dv) || dv == null)
+    missingDark.Add(key);
+}
+
+        Assert.Equal(0, missingLight.Count,
+          "浅色主题 Fluent 令牌齐全"
+       + (missingLight.Count > 0 ? "（缺失: " + string.Join(", ", missingLight) + "）" : ""));
+
+        Assert.Equal(0, missingDark.Count,
+        "深色主题 Fluent 令牌齐全"
+      + (missingDark.Count > 0 ? "（缺失: " + string.Join(", ", missingDark) + "）" : ""));
+
+        // 尺寸令牌
+        foreach (var key in new[] { "ControlCornerRadius", "LayerCornerRadius" })
+        {
+      Assert.That(res.TryFindResource(key, theme: null, out var v) && v != null,
+             $"尺寸令牌 {key} 已定义");
+        }
+
+     // 字阶令牌
+        foreach (var key in new[]
+      {
+            "FontSizeCaption", "FontSizeBody", "FontSizeSubtitle",
+     "FontSizeTitle", "FontSizeDisplay"
+        })
+        {
+    Assert.That(res.TryFindResource(key, theme: null, out var v) && v != null,
+    $"字阶令牌 {key} 已定义");
+     }
+    }
+
     private static void CommandThreadTests()
     {
         try

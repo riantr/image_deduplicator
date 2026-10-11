@@ -1,64 +1,133 @@
 <Application xmlns="https://github.com/avaloniaui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:converters="using:Deduplicator.Converters"
-             x:Class="Deduplicator.App"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+xmlns:converters="using:Deduplicator.Converters"
+ x:Class="Deduplicator.App"
              RequestedThemeVariant="Light">
 
     <!--
-        设计系统：配色、间距、圆角、字体层级。
+        设计令牌（Design Tokens）
 
-        这里直接内联而非拆成独立文件 —— Avalonia 11 缺少 ResourceInclude，
-        用 StyleInclude 引入 ResourceDictionary 会在运行时抛
-        InvalidCastException；而合并到 Styles 里又会把「资源」和「样式」混为一谈。
-        考虑到只有一个窗口，内联是最简单可靠的方案。
+        数值严格遵循 Fluent Design（WinUI 3 / Windows 11）的规范：
+          · 间距刻度  2 / 4 / 8 / 12 / 16 / 20 / 24 / 28 / 32
+          · 字阶  Caption 12 / Body 14 / Subtitle 16 / Title 20 / Display 28
+          · 圆角  4（控件）/ 8（卡片）
+          · 描边  1px（细分隔线）
 
-        若将来要支持深色主题，把这些定义移入
-        <Application.Resources><ResourceDictionary><ResourceDictionary.ThemeDictionaries>
+        颜色分浅色/深色两套，跟随 RequestedThemeVariant 自动切换。
+  资源键沿用 Fluent 的语义命名（Surface/Stroke/Subtle…），
+        这样控件样式读起来就是设计语言本身，而不是「灰色3号」之类的临时叫法。
     -->
-    <Application.Resources>
+<Application.Resources>
         <ResourceDictionary>
 
-            <!-- ===== 基础色板 ===== -->
-            <SolidColorBrush x:Key="SurfaceBrush" Color="#FFFFFF" />
-            <SolidColorBrush x:Key="SurfaceAltBrush" Color="#F7F8FA" />
-            <SolidColorBrush x:Key="SurfaceSunkenBrush" Color="#EFF1F4" />
-            <SolidColorBrush x:Key="BorderBrushSoft" Color="#E2E5EA" />
-            <SolidColorBrush x:Key="BorderBrushStrong" Color="#CBD0D8" />
+            <ResourceDictionary.ThemeDictionaries>
 
-            <SolidColorBrush x:Key="TextPrimaryBrush" Color="#1A1D21" />
-            <SolidColorBrush x:Key="TextSecondaryBrush" Color="#5F6672" />
-            <SolidColorBrush x:Key="TextTertiaryBrush" Color="#8B929E" />
+                <!-- ══════════ 浅色 ══════════ -->
+ <ResourceDictionary x:Key="Light">
 
-            <SolidColorBrush x:Key="AccentBrush" Color="#4C6EF5" />
-            <SolidColorBrush x:Key="AccentHoverBrush" Color="#4263EB" />
-            <SolidColorBrush x:Key="AccentPressedBrush" Color="#3B5BDB" />
-            <SolidColorBrush x:Key="SuccessBrush" Color="#2F9E44" />
-            <SolidColorBrush x:Key="WarningBrush" Color="#F08C00" />
-            <SolidColorBrush x:Key="DangerBrush" Color="#E03131" />
-            <SolidColorBrush x:Key="OnAccentBrush" Color="#FFFFFF" />
+   <!-- 填充 -->
+    <SolidColorBrush x:Key="SolidBackgroundFillColorBaseBrush" Color="#F3F3F3" />
+          <SolidColorBrush x:Key="LayerFillColorDefaultBrush" Color="#FFFFFF" />
+        <SolidColorBrush x:Key="LayerFillColorAltBrush" Color="#FAFAFA" />
+       <SolidColorBrush x:Key="ControlFillColorDefaultBrush" Color="#FFFFFF" />
+       <SolidColorBrush x:Key="ControlFillColorSecondaryBrush" Color="#F6F6F6" />
+   <SolidColorBrush x:Key="ControlFillColorTertiaryBrush" Color="#FBFBFB" />
 
-            <!-- ===== 字体层级 ===== -->
-            <FontFamily x:Key="FontFamilyBase">Microsoft YaHei UI, Segoe UI, Sans-serif</FontFamily>
-            <FontFamily x:Key="FontFamilyMono">Cascadia Mono, Consolas, monospace</FontFamily>
+     <!-- 描边 -->
+           <SolidColorBrush x:Key="CardStrokeColorDefaultBrush" Color="#E5E5E5" />
+    <SolidColorBrush x:Key="DividerStrokeColorDefaultBrush" Color="#EEEEEE" />
+        <SolidColorBrush x:Key="StrokeColorDefaultBrush" Color="#D0D0D0" />
 
-            <x:Double x:Key="FontSizeCaption">11</x:Double>
-            <x:Double x:Key="FontSizeBody">13</x:Double>
-            <x:Double x:Key="FontSizeTitle">15</x:Double>
-            <x:Double x:Key="FontSizeDisplay">20</x:Double>
+       <!-- 文本 -->
+    <SolidColorBrush x:Key="TextFillColorPrimaryBrush" Color="#1B1B1B" />
+       <SolidColorBrush x:Key="TextFillColorSecondaryBrush" Color="#5D5D5D" />
+   <SolidColorBrush x:Key="TextFillColorTertiaryBrush" Color="#8A8A8A" />
+       <SolidColorBrush x:Key="TextFillColorDisabledBrush" Color="#B0B0B0" />
+        <SolidColorBrush x:Key="TextOnAccentFillColorPrimaryBrush" Color="#FFFFFF" />
 
-            <!-- ===== 圆角 ===== -->
-            <CornerRadius x:Key="RadiusSm">4</CornerRadius>
-            <CornerRadius x:Key="RadiusMd">6</CornerRadius>
-            <CornerRadius x:Key="RadiusLg">10</CornerRadius>
+     <!-- 强调色（Fluent 蓝） -->
+             <SolidColorBrush x:Key="AccentFillColorDefaultBrush" Color="#005FB8" />
+     <SolidColorBrush x:Key="AccentFillColorSecondaryBrush" Color="#003E92" />
+    <SolidColorBrush x:Key="AccentFillColorTertiaryBrush" Color="#002A5C" />
+   <SolidColorBrush x:Key="ControlStrokeColorAccentBrush" Color="#005FB8" />
 
-            <!-- 滑块倍率换算（0-1 阈值 ↔ 0-100 滑块区间） -->
-            <converters:MultiplyConverter x:Key="MultiplyConverter" />
+  <!-- 语义色 -->
+         <SolidColorBrush x:Key="SystemFillColorSuccessBrush" Color="#0F7B0F" />
+           <SolidColorBrush x:Key="SystemFillColorCautionBrush" Color="#9D5D00" />
+   <SolidColorBrush x:Key="SystemFillColorCriticalBrush" Color="#C42B1C" />
+<SolidColorBrush x:Key="SystemFillColorNeutralBrush" Color="#616161" />
 
-        </ResourceDictionary>
+   <!-- 状态底色（用于徽章、提示条） -->
+              <SolidColorBrush x:Key="SystemFillColorSuccessBackgroundBrush" Color="#DFF6DD" />
+   <SolidColorBrush x:Key="SystemFillColorCautionBackgroundBrush" Color="#FFF4CE" />
+       <SolidColorBrush x:Key="SystemFillColorCriticalBackgroundBrush" Color="#FDDEDE" />
+
+   </ResourceDictionary>
+
+<!-- ══════════ 深色 ══════════ -->
+    <ResourceDictionary x:Key="Dark">
+
+     <!-- 填充 -->
+   <SolidColorBrush x:Key="SolidBackgroundFillColorBaseBrush" Color="#202020" />
+     <SolidColorBrush x:Key="LayerFillColorDefaultBrush" Color="#2C2C2C" />
+     <SolidColorBrush x:Key="LayerFillColorAltBrush" Color="#272727" />
+    <SolidColorBrush x:Key="ControlFillColorDefaultBrush" Color="#323232" />
+          <SolidColorBrush x:Key="ControlFillColorSecondaryBrush" Color="#2D2D2D" />
+      <SolidColorBrush x:Key="ControlFillColorTertiaryBrush" Color="#292929" />
+
+     <!-- 描边 -->
+      <SolidColorBrush x:Key="CardStrokeColorDefaultBrush" Color="#3D3D3D" />
+        <SolidColorBrush x:Key="DividerStrokeColorDefaultBrush" Color="#3A3A3A" />
+           <SolidColorBrush x:Key="StrokeColorDefaultBrush" Color="#4A4A4A" />
+
+  <!-- 文本 -->
+      <SolidColorBrush x:Key="TextFillColorPrimaryBrush" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="TextFillColorSecondaryBrush" Color="#C5C5C5" />
+      <SolidColorBrush x:Key="TextFillColorTertiaryBrush" Color="#969696" />
+        <SolidColorBrush x:Key="TextFillColorDisabledBrush" Color="#5E5E5E" />
+    <SolidColorBrush x:Key="TextOnAccentFillColorPrimaryBrush" Color="#000000" />
+
+     <!-- 强调色（深色下用 Lighter 变体，保证对比度） -->
+     <SolidColorBrush x:Key="AccentFillColorDefaultBrush" Color="#60CDFF" />
+    <SolidColorBrush x:Key="AccentFillColorSecondaryBrush" Color="#4CB2E8" />
+  <SolidColorBrush x:Key="AccentFillColorTertiaryBrush" Color="#3898C8" />
+         <SolidColorBrush x:Key="ControlStrokeColorAccentBrush" Color="#60CDFF" />
+
+      <!-- 语义色 -->
+         <SolidColorBrush x:Key="SystemFillColorSuccessBrush" Color="#6CCB5F" />
+      <SolidColorBrush x:Key="SystemFillColorCautionBrush" Color="#FCE100" />
+     <SolidColorBrush x:Key="SystemFillColorCriticalBrush" Color="#FF99A4" />
+       <SolidColorBrush x:Key="SystemFillColorNeutralBrush" Color="#BEBEBE" />
+
+             <SolidColorBrush x:Key="SystemFillColorSuccessBackgroundBrush" Color="#123A12" />
+     <SolidColorBrush x:Key="SystemFillColorCautionBackgroundBrush" Color="#3D2F00" />
+     <SolidColorBrush x:Key="SystemFillColorCriticalBackgroundBrush" Color="#4A1416" />
+
+   </ResourceDictionary>
+            </ResourceDictionary.ThemeDictionaries>
+
+    <!-- ══════════ 字阶 ══════════ -->
+        <FontFamily x:Key="FontFamilyBase">Segoe UI, Microsoft YaHei UI, sans-serif</FontFamily>
+    <FontFamily x:Key="FontFamilyMono">Cascadia Mono, Consolas, monospace</FontFamily>
+
+     <x:Double x:Key="FontSizeCaption">12</x:Double>
+      <x:Double x:Key="FontSizeBody">14</x:Double>
+        <x:Double x:Key="FontSizeSubtitle">16</x:Double>
+      <x:Double x:Key="FontSizeTitle">20</x:Double>
+      <x:Double x:Key="FontSizeDisplay">28</x:Double>
+
+   <!-- ══════════ 圆角 ══════════ -->
+        <CornerRadius x:Key="ControlCornerRadius">4</CornerRadius>
+     <CornerRadius x:Key="LayerCornerRadius">8</CornerRadius>
+
+     <!-- 滑块倍率换算（0-1 阈值 ↔ 0-100 滑块区间） -->
+   <converters:MultiplyConverter x:Key="MultiplyConverter" />
+
+     </ResourceDictionary>
     </Application.Resources>
 
     <Application.Styles>
         <FluentTheme />
-        <StyleInclude Source="avares://Deduplicator/Views/Controls.axaml" />
+      <StyleInclude Source="avares://Deduplicator/Views/Controls.axaml" />
     </Application.Styles>
 </Application>
