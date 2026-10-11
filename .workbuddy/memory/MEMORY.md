@@ -77,11 +77,28 @@ Avalonia + OpenCV 桌面图像去重工具，11 种相似度算法。
 - Services 层（不碰 UI）可以用 ConfigureAwait(false)
 
 ## UI 结构（2026-11-11 重构后）
-- `App.axaml`：内联设计令牌（色板/字体层级/圆角）
-- `Views/Controls.axaml`：所有控件样式集中定义，按语义分变体
+- `App.axaml`：设计令牌，**分浅色/深色两套 ThemeDictionaries**，跟随系统切换
+- `Views/Controls.axaml`：控件样式集中定义，按语义分变体（accent/danger/subtle/large）
 - `Views/MainWindow.axaml`：**不再有 11 个算法 Tab 页**，改为下拉框 + 动态参数字段
 - `Converters/AlgorithmConverters.cs`：11 个转换器控制参数字段的显示
   （新增参数只需改一处，原实现要改 11 处）
+
+### 配色用 Fluent 语义色（勿自造 Surface/Text/Accent）
+```
+LayerFillColorDefaultBrush            卡片面
+SolidBackgroundFillColorBaseBrush     页面底色
+ControlFillColorDefault/Secondary/Tertiary   控件三档填充
+CardStrokeColorDefaultBrush      卡片描边
+TextFillColorPrimary/Secondary/Tertiary/Disabled  四级文本
+AccentFillColorDefault/Secondary/Tertiary         强调色三态
+SystemFillColorSuccess/Caution/Critical       语义色
+```
+浅色强调色 #005FB8，深色换 #60CDFF 以保证对比度。
+
+### 查资源必须显式指定主题
+`TryFindResource(key, null, out v)` 查不到 `ThemeDictionaries` 里的值，
+会表现为「所有令牌缺失」的假象。必须传 `ThemeVariant.Light` / `ThemeVariant.Dark`。
+且需 `(IResourceHost)Application.Current` 转换后再调用。
 
 ## 性能调优工具（Tests 项目内）
 ```bash
@@ -123,7 +140,7 @@ dotnet run --project Deduplicator.Tests -c Release -- --profile <目录>
 - 仓库历史干净，无测试残留
 
 ## 当前状态
-- 构建 0 错误 0 警告；测试 **119 项**全通过（含 16 项 UI 测试）
+- 构建 0 错误 0 警告；测试 **128 项**全通过（含 25 项 UI 测试）
 - 应用可正常启动运行（`dotnet run` 已实测无异常）
 - 已推送到 Gitee 与 GitHub，两处与本地三方同步（`1182149`）
 - XAML 未改动过，绑定属性保持原样
