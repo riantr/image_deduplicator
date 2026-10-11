@@ -43,13 +43,15 @@ dotnet run --project Deduplicator.Tests -c Release   # 测试（退出码 0 = �
 ```
 
 ## Git
-- 托管在 Gitee（全局身份：任勇祥 <14427461+ren-yongxiang@user.noreply.gitee.com>）
-- 尚未关联远程仓库，需 `git remote add origin <gitee地址>` 后推送
+- 远程：`git@gitee.com:ren-yongxiang/image_deduplicator.git`（SSH，非 HTTPS）
+- 身份：任勇祥 <14427461+ren-yongxiang@user.noreply.gitee.com>（全局已配）
+- **推送必须用 SSH**：HTTPS 会卡在密码输入，非交互终端无法完成
+- 本地密钥 `~/.ssh/id_ed25519` 已在 Gitee 授权（`ssh -T git@gitee.com` 可验证）
 - CI 配置在 `.github/workflows/ci.yml` 与 `.gitee/workflows/ci.yml`
 - 回退锚点标签：`backup-before-author-fix`
 
 ## 当前状态
 - 构建 0 错误 0 警告；测试 **73 项**全通过
-- git 仓库已初始化，5 次提交，工作区干净
+- git 已推送至 Gitee（6 次提交，master 追踪 origin/master，工作区干净）
 - XAML 未改动过，绑定属性保持原样
 - **UI 层未经人工验证**：删除、原图对调、文件名交换等交互建议实际跑一遍确认
