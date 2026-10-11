@@ -24,6 +24,15 @@ Avalonia + OpenCV 桌面图像去重工具，11 种相似度算法。
 - **预筛削减率随阈值变化**：Hash 类阈值 <0.75 后收益归零（鸽笼原理的数学必然，
   保无漏报所需分带数随阈值降低而增加，桶泛化至全量）。这是合理行为，不要误判为缺陷
 
+## 预筛现状（2026-11-11 更新）
+全部 11 种算法均已有预筛：
+- FileHash：文件大小 + 哈希分桶（99.7%）
+- A/D/PHash：分带 LSH（段数随阈值自适应）
+- Histogram：均值排序 + 二分滑窗剪枝
+- Lance：多表随机投影 LSH（全阈值稳定 92.2%）
+- **SSIM/Template/FastDup/SIFT/ORB：代理哈希预筛（8×8 均值哈希 + PopCount 逐对筛选）**
+  实测把这5 个算法的比对总耗时从 199s 降到 1.8s（113 倍）
+
 ## 关键陷阱（血泪教训）
 1. **OpenCvSharp 的 Mat 所有权**：从 `using` 变量返回前必须 `Clone()`，
    否则调用方拿到悬垂指针 → `AccessViolationException`。编译器查不出来
@@ -40,6 +49,8 @@ Avalonia + OpenCV 桌面图像去重工具，11 种相似度算法。
 dotnet build                                    # 构建（应 0 错误 0 警告）
 dotnet run --project Deduplicator.csproj       # 运行
 dotnet run --project Deduplicator.Tests -c Release   # 测试（退出码 0 = 通过，可接 CI）
+# 性能剖析（对任意图像目录）
+dotnet run --project Deduplicator.Tests -c Release -- --profile <目录>
 ```
 
 ## Git
@@ -57,10 +68,10 @@ dotnet run --project Deduplicator.Tests -c Release   # 测试（退出码 0 = �
 - CI 配置在 `.github/workflows/ci.yml` 与 `.gitee/workflows/ci.yml`
   → **GitHub 上会真正生效**（Actions 原生支持），Gitee 需在仓库设置里启用 Gitee Go
 - 回退锚点标签：`backup-before-author-fix`
-- 仓库历史干净：7 次提交，无测试残留
+- 仓库历史干净，无测试残留
 
 ## 当前状态
-- 构建 0 错误 0 警告；测试 **73 项**全通过
+- 构建 0 错误 0 警告；测试 **103 项**全通过
 - 已推送到 Gitee 与 GitHub，两处与本地三方同步（`1182149`）
 - XAML 未改动过，绑定属性保持原样
 - **UI 层未经人工验证**：删除、原图对调、文件名交换等交互建议实际跑一遍确认
