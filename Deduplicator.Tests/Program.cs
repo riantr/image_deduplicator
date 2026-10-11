@@ -60,7 +60,13 @@ try
             return 0;
             }
 
-UiTests.Run();
+if (args.Contains("--hog"))
+  {
+ HogCheck.Run(args.FirstOrDefault(a => !a.StartsWith("--")) ?? workDir);
+  return 0;
+        }
+
+  UiTests.Run();
             DeduplicationTests.Run(workDir);
             FileSafetyTests.Run(workDir);
         }
