@@ -50,8 +50,10 @@ dotnet run --project Deduplicator.Tests -c Release   # 测试（退出码 0 = �
 - **必须用 SSH**：HTTPS 会卡在密码输入，非交互终端无法完成
   （GitHub 无令牌/gh CLI；本地 `id_ed25519` 已在两个平台授权）
 - 上游追踪：`master` → `origin/master`（Gitee）
-- **推送两个远程要显式指定**：`git push origin github master`
-  （`push.default=all` 不是合法值，只有 nothing/matching/simple/upstream/current）
+- **推送两个远程要分别执行**：`git push origin master` 然后 `git push github master`
+  （⚠️ `git push origin github master` 是**错的** —— `github` 会被当作分支名，
+  报 `src refspec github does not match any`；
+  `push.default=all` 也不是合法值，只有 nothing/matching/simple/upstream/current）
 - CI 配置在 `.github/workflows/ci.yml` 与 `.gitee/workflows/ci.yml`
   → **GitHub 上会真正生效**（Actions 原生支持），Gitee 需在仓库设置里启用 Gitee Go
 - 回退锚点标签：`backup-before-author-fix`
