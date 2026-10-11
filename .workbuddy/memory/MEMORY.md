@@ -49,12 +49,36 @@ Avalonia + OpenCV 桌面图像去重工具，11 种相似度算法。
 5. **重写 git 历史后要校验树对象哈希**：`git rev-parse HEAD^{tree}` 前后一致
    才能确认内容未变，只有作者变了
 
+## Avalonia 11 的坑（从 WPF 迁移必看）
+| 坑 | 说明 |
+|---|---|
+| `Visibility` 枚举不存在 | Avalonia 11 的 `IsVisible` 是 **bool**，照 WPF 习惯写会编译失败 |
+| 无 `ResourceInclude` | 资源字典只能内联到 `Application.Resources` |
+| `ResourceDictionary` 不能用 `StyleInclude` | 类型不匹配，运行时抛 `InvalidCastException` |
+| `Grid` 无 `ColumnSpacing`/`RowSpacing` | Avalonia 11 不支持，只能用 Margin |
+| `Cursor="Default"` 非法 | 只支持 `Hand` 等少数值 |
+| `AppBuilder` 无 `Application` 属性 | 用 `Application.Current` |
+| 遍历子控件 | `GetLogicalChildren`/`GetVisualChildren` 在 `LogicalExtensions`/`VisualExtensions`；两棵树会重复计数，需去重 |
+
+**XAML 只在运行时解析，编译通过 ≠ 能跑**。必须有 UI 自动化测试。
+
+## UI 结构（2026-11-11 重构后）
+- `App.axaml`：内联设计令牌（色板/字体层级/圆角）
+- `Views/Controls.axaml`：所有控件样式集中定义，按语义分变体
+- `Views/MainWindow.axaml`：**不再有 11 个算法 Tab 页**，改为下拉框 + 动态参数字段
+- `Converters/AlgorithmConverters.cs`：11 个转换器控制参数字段的显示
+  （新增参数只需改一处，原实现要改 11 处）
+
 ## 性能调优工具（Tests 项目内）
 ```bash
 --profile <目录>   # 各算法特征/比对耗时与候选量，按耗时排序
 --stage <目录>     # 特征计算分阶段：解码/灰度/代理哈希/各算法核心
 --quality <目录>   # 验证工作尺寸对相似度质量的影响（决定能否缩小的依据）
+--shot           # 无头截图（受 Avalonia Headless 限制，当前渲染为空白）
 ```
+
+**UI 测试**：`UiTests.cs` 用 Avalonia Headless 构建控件树，
+断言资源加载、样式生效、控件数量、转换器逻辑。断言数 103 → 117。
 **关键经验**：OpenCV 内部已多线程，外层 `Parallel.For` 会产生线程竞争，
 profile（并行）与 stage（单线程）的数字要**分开看**才能看清真实收益。
 
@@ -85,7 +109,8 @@ dotnet run --project Deduplicator.Tests -c Release -- --profile <目录>
 - 仓库历史干净，无测试残留
 
 ## 当前状态
-- 构建 0 错误 0 警告；测试 **103 项**全通过
+- 构建 0 错误 0 警告；测试 **117 项**全通过（含 14 项 UI 测试）
 - 已推送到 Gitee 与 GitHub，两处与本地三方同步（`1182149`）
 - XAML 未改动过，绑定属性保持原样
-- **UI 层未经人工验证**：删除、原图对调、文件名交换等交互建议实际跑一遍确认
+- **UI 已重构但仍需人工确认视觉效果**：自动化测试只验证「能构建、资源不缺失」，
+  实际观感（配色协调、间距舒适）需真人过目
