@@ -117,42 +117,58 @@ public static class DeduplicationTests
         foreach (var img in set) img.Dispose();
     }
 
-    // ---------- 预筛：无漏报 ----------
+    // ---------- 预筛：无漏报（跨阈值参数化） ----------
     private static void PrefilterTest(DeduplicationService svc, string dir)
     {
-        Assert.Section("候选预筛：效率与无漏报");
+        Assert.Section("候选预筛：跨阈值无漏报");
+
+        // 阈值区间覆盖：极严（几乎只有相同图）→ 中等 → 极松（多数图都相似）
+        // 预筛的分带数/滑窗宽度都随阈值自适应，低阈值是最容易出问题的区间
+        double[] thresholds = { 0.95, 0.85, 0.75, 0.65, 0.55, 0.45 };
 
         foreach (var algo in new[] { AlgorithmType.FileHash, AlgorithmType.AHash,
                                      AlgorithmType.DHash, AlgorithmType.PHash,
                                      AlgorithmType.Histogram, AlgorithmType.Lance })
         {
-            var set = svc.ScanImages(dir, "filename");
-            var p = Params(algo);
-
-            svc.CalculateFeaturesAsync(set, algo, p).GetAwaiter().GetResult();
-
-            var candidates = CandidatePrefilter.BuildCandidates(set, algo, p);
-            long brute = (long)set.Count * (set.Count - 1) / 2;
-
-            var candidateSet = new HashSet<(int, int)>(candidates);
-            double reduction = brute == 0 ? 0 : (1 - (double)candidates.Count / brute) * 100;
-            Console.WriteLine($"       {algo,-10} 暴力 {brute,7:N0} → 候选 {candidates.Count,7:N0} （-{reduction,5:F1}%）");
-
-            // 暴力找出所有超阈值对，确认全部包含在候选集中（无漏报）
-            int missing = 0;
-            for (int i = 0; i < set.Count; i++)
+            foreach (double threshold in thresholds)
             {
-                for (int j = i + 1; j < set.Count; j++)
+                var set = svc.ScanImages(dir, "filename");
+                var p = Params(algo);
+                p.Threshold = threshold;
+
+                svc.CalculateFeaturesAsync(set, algo, p).GetAwaiter().GetResult();
+
+                var candidates = CandidatePrefilter.BuildCandidates(set, algo, p);
+                long brute = (long)set.Count * (set.Count - 1) / 2;
+                var candidateSet = new HashSet<(int, int)>(candidates);
+
+                // 穷举：暴力算出全部超阈值对，确认无一遗漏
+                int missing = 0;
+                int positives = 0;
+                for (int i = 0; i < set.Count; i++)
                 {
-                    double sim = svc.CalculateSimilarityPublic(set[i], set[j], algo, p);
-                    if (sim >= p.Threshold && !candidateSet.Contains((i, j)))
-                        missing++;
+                    for (int j = i + 1; j < set.Count; j++)
+                    {
+                        double sim = svc.CalculateSimilarityPublic(set[i], set[j], algo, p);
+                        if (sim >= p.Threshold)
+                        {
+                            positives++;
+                            if (!candidateSet.Contains((i, j)))
+                                missing++;
+                        }
+                    }
                 }
+
+                double reduction = brute == 0 ? 0 : (1 - (double)candidates.Count / brute) * 100;
+
+                Console.WriteLine($"       {algo,-10} 阈值 {threshold:F2}  超阈值对 {positives,5:N0}  "
+                    + $"候选 {candidates.Count,6:N0}/{brute,-7:N0} （-{reduction,5:F1}%）");
+
+                Assert.Equal(0, missing,
+                    $"{algo} @阈值{threshold:F2}: 预筛无漏报（超阈值对 {positives}）");
+
+                foreach (var img in set) img.Dispose();
             }
-
-            Assert.Equal(0, missing, $"{algo}: 预筛无漏报");
-
-            foreach (var img in set) img.Dispose();
         }
     }
 
