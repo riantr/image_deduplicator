@@ -77,7 +77,9 @@ Avalonia + OpenCV 桌面图像去重工具，11 种相似度算法。
 - Services 层（不碰 UI）可以用 ConfigureAwait(false)
 
 ## UI 结构（2026-11-11 重构后）
-- `App.axaml`：设计令牌，**分浅色/深色两套 ThemeDictionaries**，跟随系统切换
+- `App.axaml`：设计令牌，**分浅色/深色两套 ThemeDictionaries**
+- 主题切换：`MainViewModel.ToggleTheme()` 改 `Application.Current.RequestedThemeVariant`；
+  偏好持久化在 `%LocalAppData%/Deduplicator/theme.txt`，启动时自动恢复
 - `Views/Controls.axaml`：控件样式集中定义，按语义分变体（accent/danger/subtle/large）
 - `Views/MainWindow.axaml`：**不再有 11 个算法 Tab 页**，改为下拉框 + 动态参数字段
 - `Converters/AlgorithmConverters.cs`：11 个转换器控制参数字段的显示
@@ -140,7 +142,8 @@ dotnet run --project Deduplicator.Tests -c Release -- --profile <目录>
 - 仓库历史干净，无测试残留
 
 ## 当前状态
-- 构建 0 错误 0 警告；测试 **128 项**全通过（含 25 项 UI 测试）
+- 构建 0 错误 0 警告；测试 **135 项**全通过（含 32 项 UI 测试）
+- 支持浅色/深色主题切换（标题栏按钮，偏好跨会话记忆）
 - 应用可正常启动运行（`dotnet run` 已实测无异常）
 - 已推送到 Gitee 与 GitHub，两处与本地三方同步（`1182149`）
 - XAML 未改动过，绑定属性保持原样
