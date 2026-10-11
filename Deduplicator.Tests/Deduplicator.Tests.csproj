@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <!-- 显式指定入口点，避免与主项目的 Program 冲突 -->
+    <StartupObject>Deduplicator.Tests.Program</StartupObject>
+    <!-- 引用主项目仅为访问算法/服务层，不启动 UI -->
+    <NoWarn>$(NoWarn);AVLN0000</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="OpenCvSharp4" Version="4.10.0.20241108" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Deduplicator.csproj" />
+  </ItemGroup>
+
+</Project>

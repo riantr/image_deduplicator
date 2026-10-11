@@ -1,0 +1,23 @@
+## .NET 构建产物
+bin/
+obj/
+[Dd]ebug/
+[Rr]elease/
+*.user
+*.suo
+*.userprefs
+
+## Visual Studio / Rider
+.vs/
+.idea/
+*.DotSettings.user
+
+## 测试产物
+TestResults/
+*.trx
+coverage*.xml
+coverage*.json
+
+## 运行时生成
+*.log
+logs/

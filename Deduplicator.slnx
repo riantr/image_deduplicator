@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="Deduplicator.csproj" />
+  <Project Path="Deduplicator.Tests/Deduplicator.Tests.csproj" />
+</Solution>
