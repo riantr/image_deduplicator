@@ -6,6 +6,8 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Input;
+using Avalonia;
+using Avalonia.Styling;
 using Avalonia.Threading;
 using Deduplicator.Helpers;
 using Deduplicator.Models;
@@ -184,8 +186,107 @@ public class MainViewModel : ViewModelBase
     public string StatusMessage
     {
         get => _statusMessage;
-        set => SetProperty(ref _statusMessage, value);
+     set => SetProperty(ref _statusMessage, value);
     }
+
+    #region 主题
+
+    private bool _isDarkTheme;
+
+    /// <summary>
+    /// 是否为深色主题
+ /// </summary>
+    /// <remarks>
+    /// 切换 <see cref="Application.RequestedThemeVariant"/> 后，
+    /// App.axaml 里 ThemeDictionaries 中的对应色板会自动生效。
+ /// </remarks>
+    public bool IsDarkTheme
+    {
+  get => _isDarkTheme;
+        set
+{
+    if (SetProperty(ref _isDarkTheme, value))
+            {
+        ApplyTheme();
+        OnPropertyChanged(nameof(ThemeToggleText));
+    }
+ }
+    }
+
+    /// <summary>
+    /// 主题切换按钮上的文字
+    /// </summary>
+    public string ThemeToggleText => IsDarkTheme ? "☀ 浅色" : "☾ 深色";
+
+    /// <summary>
+ /// 切换浅色/深色主题
+    /// </summary>
+    public void ToggleTheme() => IsDarkTheme = !IsDarkTheme;
+
+    /// <summary>
+    /// 把主题应用到 Application
+    /// </summary>
+    private void ApplyTheme()
+    {
+        var app = Application.Current;
+        if (app == null) return;
+
+        app.RequestedThemeVariant = IsDarkTheme ? ThemeVariant.Dark : ThemeVariant.Light;
+      _logService.Log($"已切换到{(IsDarkTheme ? "深色" : "浅色")}主题");
+    }
+
+    /// <summary>
+    /// 主题偏好文件名（用于跨会话记忆）
+    /// </summary>
+    private static string ThemePreferenceFile =>
+  Path.Combine(
+       Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "Deduplicator", "theme.txt");
+
+    /// <summary>
+    /// 读取上次的��题偏好；文件不存在时保持默认浅色
+    /// </summary>
+    private void LoadThemePreference()
+    {
+        try
+    {
+            if (File.Exists(ThemePreferenceFile))
+    {
+            string content = File.ReadAllText(ThemePreferenceFile).Trim();
+          if (content.Equals("Dark", StringComparison.OrdinalIgnoreCase))
+        {
+   _isDarkTheme = true;
+         OnPropertyChanged(nameof(IsDarkTheme));
+          OnPropertyChanged(nameof(ThemeToggleText));
+             ApplyTheme();
+ }
+            }
+        }
+        catch (Exception ex)
+    {
+   // 偏好读取失败不影响启动，仅记录
+     System.Diagnostics.Debug.WriteLine($"读取主题偏好失败: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 保存主题偏好
+    /// </summary>
+    private void SaveThemePreference()
+    {
+     try
+        {
+      string dir = Path.GetDirectoryName(ThemePreferenceFile)!;
+            Directory.CreateDirectory(dir);
+            File.WriteAllText(ThemePreferenceFile, IsDarkTheme ? "Dark" : "Light");
+        }
+        catch (Exception ex)
+        {
+       System.Diagnostics.Debug.WriteLine($"保存主题偏好失败: {ex.Message}");
+        }
+    }
+
+    #endregion
 
     public ObservableCollection<string> LogMessages => _logService.LogMessages;
 
@@ -375,6 +476,9 @@ public class MainViewModel : ViewModelBase
         NavigatePreviousCommand = new RelayCommand(NavigatePrevious, CanNavigatePrevious);
         NavigateNextCommand = new RelayCommand(NavigateNext, CanNavigateNext);
         DeleteDuplicateCommand = new RelayCommand(DeleteDuplicate, CanDeleteDuplicate);
+    // 在命令初始化前恢复主题，确保界面首次显示即为用户偏好的模式
+     LoadThemePreference();
+
         ClearLogCommand = new RelayCommand(() => _logService.ClearLog());
         ExportLogCommand = new RelayCommand(ExportLog);
 

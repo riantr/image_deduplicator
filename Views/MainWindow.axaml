@@ -95,6 +95,12 @@
                             VerticalAlignment="Center">
                     <TextBlock Classes="caption" VerticalAlignment="Center"
                                Text="{Binding LoadedImageCount, StringFormat='已载入 {0} 张'}" />
+
+  <!-- 主题切换 -->
+       <Button Content="{Binding ThemeToggleText}"
+      Classes="subtle"
+      Click="ToggleTheme_Click"
+    ToolTip.Tip="在浅色与深色主题之间切换（自动记住选择）" />
                 </StackPanel>
             </Grid>
         </Border>

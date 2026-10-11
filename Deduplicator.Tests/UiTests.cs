@@ -9,6 +9,7 @@ using Avalonia.Markup.Xaml.Styling;
 using Avalonia.Themes.Fluent;
 using Avalonia.VisualTree;
 using Deduplicator.Converters;
+using Deduplicator.ViewModels;
 using Deduplicator.Models;
 using Deduplicator.Views;
 
@@ -50,6 +51,9 @@ try
 
         // 设计令牌
         DesignTokenTests();
+
+        // 主题切换
+        ThemeToggleTests();
 
         // 转换器逻辑
         ConverterTests();
@@ -172,6 +176,55 @@ try
     Assert.That(res.TryFindResource(key, theme: null, out var v) && v != null,
     $"字阶令牌 {key} 已定义");
      }
+    }
+
+    /// <summary>
+    /// 验证主题切换真的会改变 Application 的 RequestedThemeVariant。
+    ///
+    /// <para>Token 存在不等于切换生效 —— 必须确认切换后
+    /// Application 层面的主题真的变了，否则 DynamicResource 不会重新求值。</para>
+    /// </summary>
+    private static void ThemeToggleTests()
+    {
+        var app = Application.Current!;
+        var original = app.RequestedThemeVariant;
+
+        try
+        {
+            var vm = new MainViewModel(
+                new Services.LogService { EnableFileLog = false },
+                new Services.FileOperationService(new Services.LogService { EnableFileLog = false }),
+                new Services.RecycleBinService(
+                    new Services.LogService { EnableFileLog = false },
+                    new Services.FileOperationService(new Services.LogService { EnableFileLog = false })),
+                new Services.DeduplicationService(new Services.LogService { EnableFileLog = false }));
+
+            Assert.Equal(false, vm.IsDarkTheme, "默认应为浅色主题");
+
+            // 切换到深色
+            vm.ToggleTheme();
+
+            Assert.Equal(true, vm.IsDarkTheme, "切换后 IsDarkTheme 为 true");
+            Assert.Equal(ThemeVariant.Dark, app.RequestedThemeVariant,
+                "Application 的主题已切到 Dark");
+
+        Assert.Equal("☀ 浅色", vm.ThemeToggleText, "按钮文字提示下一步动作");
+
+            // 再切回浅色
+            vm.ToggleTheme();
+            Assert.Equal(false, vm.IsDarkTheme, "再次切换回浅色");
+            Assert.Equal(ThemeVariant.Light, app.RequestedThemeVariant,
+                "Application 的主题已切回 Light");
+            Assert.Equal("☾ 深色", vm.ThemeToggleText, "按钮文字正确");
+        }
+        catch (Exception ex)
+        {
+            Assert.That(false, "主题切换正常", $"{ex.GetType().Name}: {ex.Message}");
+        }
+        finally
+        {
+            app.RequestedThemeVariant = original;
+        }
     }
 
     private static void CommandThreadTests()

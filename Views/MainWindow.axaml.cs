@@ -91,6 +91,18 @@ public partial class MainWindow : Window
     }
     
     /// <summary>
+  /// 切换浅色 / 深色主题
+ /// </summary>
+    /// <remarks>
+    /// 主题令牌定义在 App.axaml 的 ThemeDictionaries 中，
+    /// 切换 RequestedThemeVariant 后所有 DynamicResource 绑定会自动重新求值。
+    /// </remarks>
+    private void ToggleTheme_Click(object? sender, RoutedEventArgs e)
+    {
+      _viewModel?.ToggleTheme();
+    }
+
+    /// <summary>
     /// 键盘快捷键处理
     /// </summary>
     protected override void OnKeyDown(KeyEventArgs e)
