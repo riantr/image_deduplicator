@@ -54,7 +54,13 @@ try
             return 0;
   }
 
-             UiTests.Run();
+               if (args.Contains("--shot"))
+        {
+        UiShot.Run(Path.Combine(Path.GetTempPath(), "dedup_shots"));
+            return 0;
+            }
+
+ UiTests.Run();
         DeduplicationTests.Run(workDir);
             FileSafetyTests.Run(workDir);
         }
