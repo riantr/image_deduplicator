@@ -145,6 +145,8 @@ dotnet run --project Deduplicator.Tests -c Release -- --profile <目录>
 ```
 
 ## Git
+- **已发布 v2.0.0 标签**（附注标签，`ab6a635`），
+  分支 master 同步推送到 Gitee；github 落后一个提交（按要求未同步）
 - **双远程**（同一份代码托管两处）：
   - `origin` → `git@gitee.com:ren-yongxiang/image_deduplicator.git`
   - `github` → `git@github.com:riantr/image_deduplicator.git`
